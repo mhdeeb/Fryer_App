@@ -11,10 +11,10 @@ c:\Users\eldeeb\Desktop\Fryer_APP\output\sketch\Fryer_APP.ino.cpp.o: \
  C:\Users\eldeeb\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.6\cores\arduino/USBAPI.h \
  C:\Users\eldeeb\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.6\cores\arduino/Arduino.h \
  C:\Users\eldeeb\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.6\variants\standard/pins_arduino.h \
- c:\Users\eldeeb\Desktop\Fryer_APP\output\sketch\STD_TYPES.h \
  C:\Users\eldeeb\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.6\libraries\Wire\src/Wire.h \
  C:\Users\eldeeb\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.6\cores\arduino/Stream.h \
  C:\Users\eldeeb\Documents\Arduino\libraries\LiquidCrystal_I2C/LiquidCrystal_I2C.h \
  C:\Users\eldeeb\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.6\cores\arduino/Print.h \
  c:\Users\eldeeb\Desktop\Fryer_APP\output\sketch\Encoder_Interface.h \
+ c:\Users\eldeeb\Desktop\Fryer_APP\output\sketch\STD_TYPES.h \
  c:\Users\eldeeb\Desktop\Fryer_APP\output\sketch\Heater_Interface.h
