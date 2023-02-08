@@ -10,7 +10,10 @@
 #include <LiquidCrystal_I2C.h>
 
 #include "Encoder_Interface.h"
+#include "PushButton_Interface.h"
 #include "Heater_Interface.h"
+
+#define DEBOUNCE_DELAY 50
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
@@ -74,12 +77,13 @@ u8 start_flag = 0;
 u8 pre_temp = 50;
 u8 pre_temp_1 = 50;
 u8 Start_timer[2] = {0, 0};
-u32 TIMER[6] = {
-	1 * 5 * 60,
-	2 * 5 * 60,
-	3 * 5 * 60,
-	4 * 5 * 60,
-	5 * 5 * 60};
+int TIMER[] = {
+	0.5 * 60,
+	1 * 60,
+	3.5 * 60,
+	6 * 60,
+	12 * 60,
+	16 * 60};
 
 u8 current_timer[2] = {1, 2};
 u8 ON_timer = 0, Max_time, Max_Min, Max_sec, On_pointer = 0;
@@ -96,11 +100,13 @@ Encoder encoder;
 
 Counter selector_counter, timer1_counter, timer2_counter, temp_counter;
 
+PushButton timer_switch;
+
 enum counter_type
 {
-	SELECTOR,
 	TIMER_1,
 	TIMER_2,
+	SELECTOR,
 	COUNTER_SIZE
 };
 
@@ -116,10 +122,11 @@ void setup()
 	Encoder_VidInit(&encoder, 9, 10, 11);
 
 	Counter_Init(&selector_counter, 0, 1, 1);
+	// Counter_Init(&timer1_counter, 0, 24 * 60 - 1, 1);
+	Counter_Init(&timer1_counter, 0, 5, 1);
+	Counter_Init(&timer2_counter, 0, 5, 1);
 
-	Counter_Init(&timer1_counter, 0, 24 * 60, 1);
-
-	Counter_Init(&timer2_counter, 0, 24 * 60, 1);
+	PushButton_Init(&timer_switch, 12, 2000);
 
 	Serial.begin(9600);
 	/* LCD INITIALIZATION*/
@@ -147,11 +154,18 @@ void setup()
 
 	lcd.clear();
 
+	lcd.setCursor(0, 1 - selector_counter.value);
+	lcd.print(' ');
+	lcd.setCursor(0, selector_counter.value);
+	lcd.print('>');
+
 	lcd.setCursor(1, 0);
 	lcd.print("T1");
 
+	char time_string[6];
 	lcd.setCursor(4, 0);
-	lcd.print("00:00");
+	sprintf(time_string, "%02d:%02d", TIMER[timer1_counter.value] / 60, TIMER[timer1_counter.value] % 60);
+	lcd.printstr(time_string);
 
 	lcd.setCursor(11, 0);
 	lcd.print("Temp");
@@ -160,7 +174,8 @@ void setup()
 	lcd.print("T2");
 
 	lcd.setCursor(4, 1);
-	lcd.print("00:00");
+	sprintf(time_string, "%02d:%02d", TIMER[timer2_counter.value] / 60, TIMER[timer2_counter.value] % 60);
+	lcd.printstr(time_string);
 
 	lcd.setCursor(12, 1);
 	lcd.print("25");
@@ -172,46 +187,59 @@ void setup()
 	lcd.print("C");
 }
 
-long lastDebounceTime = 0;
-long debounceDelay = 50;
-
 void loop()
 {
-	if ((millis() - lastDebounceTime) > debounceDelay)
+	if (timer_switch.isToggled)
+	{
+		
+	}
+
+	if (encoder.button.isPressed)
+	{
+		selectedCounter = selector_counter.value + SELECTOR - selectedCounter;
+		if (selectedCounter == SELECTOR)
+		{
+			lcd.setCursor(0, 1 - selector_counter.value);
+			lcd.print(' ');
+			lcd.setCursor(0, selector_counter.value);
+			lcd.print('>');
+		}
+		else
+		{
+			lcd.setCursor(0, 0);
+			lcd.print(' ');
+			lcd.setCursor(0, 1);
+			lcd.print(' ');
+		}
+	}
+
+	if (Encoder_popRotationChange(&encoder))
 	{
 		char time_string[6];
-
-		lcd.setCursor(0, 0);
-		lcd.print(' ');
-		lcd.setCursor(0, 1);
-		lcd.print(' ');
-		lcd.setCursor(4, 0);
-		Serial.println(timer1_counter.value);
-		sprintf(time_string, "%02d:%02d", timer1_counter.value / 60, timer1_counter.value % 60);
-		lcd.printstr(time_string);
-		lcd.setCursor(4, 1);
-		sprintf(time_string, "%02d:%02d", timer2_counter.value / 60, timer2_counter.value % 60);
-		lcd.printstr(time_string);
-
-		if (digitalRead(encoder.buttonPin) == LOW && encoder.ButtonState == HIGH)
-		{
-			selectedCounter = (true) ? selector_counter.value : SELECTOR;
-		}
-
-		Encoder_VidControl(&encoder, counters[selectedCounter]);
-
 		switch (selectedCounter)
 		{
 		case SELECTOR:
+			lcd.setCursor(0, 1 - selector_counter.value);
+			lcd.print(' ');
 			lcd.setCursor(0, selector_counter.value);
 			lcd.print('>');
 			break;
 		case TIMER_1:
+			lcd.setCursor(4, 0);
+			sprintf(time_string, "%02d:%02d", TIMER[timer1_counter.value] / 60, TIMER[timer1_counter.value] % 60);
+			lcd.printstr(time_string);
 			break;
 		case TIMER_2:
+			lcd.setCursor(4, 1);
+			sprintf(time_string, "%02d:%02d", TIMER[timer2_counter.value] / 60, TIMER[timer2_counter.value] % 60);
+			lcd.printstr(time_string);
 			break;
 		}
-
-		lastDebounceTime = millis();
 	}
+
+	PushButton_Update(&encoder.button);
+
+	PushButton_Update(&timer_switch);
+
+	Encoder_VidControl(&encoder, counters[selectedCounter]);
 }
