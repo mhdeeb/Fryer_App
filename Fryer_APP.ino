@@ -169,19 +169,27 @@ void setup()
 
 void loop()
 {
+	static bool wasHeld = false;
 	if (timer_switch.IsReleased())
 	{
-		encoder.GetButton().Reset();
-		lcd.setCursor(0, selector_counter.GetValue());
-		lcd.print(' ');
-		lcd.setCursor(9, selector_counter.GetValue());
-		lcd.print(' ');
-		lcd.setCursor(0, selector_counter.GetValue());
-		lcd.print('>');
-		if (!Timers[selector_counter.GetValue()]->IsRunning())
-			Timers[selector_counter.GetValue()]->Start();
-		// else
-		// 	Timers[selector_counter.GetValue()]->Stop();
+		if (!wasHeld)
+		{
+			encoder.GetButton().Reset();
+			lcd.setCursor(0, selector_counter.GetValue());
+			lcd.print(' ');
+			lcd.setCursor(9, selector_counter.GetValue());
+			lcd.print(' ');
+			lcd.setCursor(0, selector_counter.GetValue());
+			lcd.print('>');
+			if (!Timers[selector_counter.GetValue()]->IsRunning())
+				Timers[selector_counter.GetValue()]->Start();
+			// else
+			// 	Timers[selector_counter.GetValue()]->Stop();
+		}
+		else
+		{
+			wasHeld = false;
+		}
 	}
 
 	if (timer_switch.IsHeld())
@@ -189,6 +197,7 @@ void loop()
 		encoder.GetButton().Reset();
 		Timers[selector_counter.GetValue()]->Reset();
 		timer_switch.Reset();
+		wasHeld = true;
 	}
 
 	static u32 last_time = millis();
@@ -241,7 +250,7 @@ void loop()
 
 	if (int8_t change = encoder.popRotationChange())
 	{
-		if (encoder.GetButton().IsToggled())
+		if (encoder.GetButton().IsToggled() && !Timers[selector_counter.GetValue()]->IsRunning())
 		{
 			static s8 selectedCounter = 0;
 			if (change == 1)

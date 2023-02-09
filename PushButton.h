@@ -28,14 +28,14 @@ private:
 public:
     PushButton(u8 pin, u32 holdTime);
     void Update();
-    bool IsPressed();
-    bool IsReleased();
-    bool IsHeld();
-    bool IsToggled();
-    u32 GetTimeHeld();
+    bool IsPressed() const;
+    bool IsReleased() const;
+    bool IsHeld() const;
+    bool IsToggled() const;
+    u32 GetTimeHeld() const;
     void SetHoldTime(u32 holdTime);
-    u8 GetState();
-    u32 GetHoldTime();
+    u8 GetState() const;
+    u32 GetHoldTime() const;
     void Reset();
 };
 

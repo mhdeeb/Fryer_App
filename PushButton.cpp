@@ -50,22 +50,19 @@ void PushButton::Update()
     // lastDebounceTime = millis();
 }
 
-bool PushButton::IsPressed()
-{
-    return isPressed;
-}
+bool PushButton::IsPressed() const { return isPressed; }
 
-bool PushButton::IsReleased() { return isReleased; }
+bool PushButton::IsReleased() const { return isReleased; }
 
-bool PushButton::IsHeld() { return isHeld; }
+bool PushButton::IsHeld() const { return isHeld; }
 
-bool PushButton::IsToggled() { return isToggled; }
+bool PushButton::IsToggled() const { return isToggled; }
 
-u32 PushButton::GetTimeHeld() { return timeHeld; }
+u32 PushButton::GetTimeHeld() const { return timeHeld; }
 
-u8 PushButton::GetState() { return state; }
+u8 PushButton::GetState() const { return state; }
 
-u32 PushButton::GetHoldTime() { return holdTime; }
+u32 PushButton::GetHoldTime() const { return holdTime; }
 
 void PushButton::SetHoldTime(u32 holdTime) { this->holdTime = holdTime; }
 
