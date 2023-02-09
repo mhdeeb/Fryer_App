@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-Timer::Timer(u32 initialValue) : counter(0, initialValue, -1, false), lastUpdateTime(millis()) {}
+Timer::Timer(u32 initialValue) : counter(0, initialValue, 1, false), lastUpdateTime(millis()) { counter.SetValue(initialValue); }
 
 void Timer::Set(u32 value)
 {
@@ -35,7 +35,7 @@ void Timer::Update()
 {
     if (isRunning && (millis() - lastUpdateTime) >= updateDelay)
     {
-        counter.Increment();
+        counter.Decrement();
         if (counter.GetValue() == counter.GetMin())
         {
             isRunning = false;

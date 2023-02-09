@@ -14,34 +14,32 @@
 class Counter
 {
 private:
-    s32 value;
-    s32 max;
-    s32 min;
-    s32 step;
+    u32 value;
+    u32 max;
+    u32 min;
+    u32 step;
     bool isCycleable;
 
 public:
-    Counter(s32 min, s32 max, s32 step, bool isCycleable = 1);
+    Counter(u32 min, u32 max, u32 step, bool isCycleable = 1);
 
-    void SetValue(s32 value);
+    void SetValue(u32 value);
 
-    s32 GetValue() const;
+    u32 GetValue() const;
 
-    void SetMax(s32 max);
+    void SetMax(u32 max);
 
-    s32 GetMax() const;
+    u32 GetMax() const;
 
-    void SetMin(s32 min);
+    void SetMin(u32 min);
 
-    s32 GetMin() const;
+    u32 GetMin() const;
 
-    void SetStep(s32 step);
+    void SetStep(u32 step);
 
-    s32 GetStep() const;
+    u32 GetStep() const;
 
     void SetCycleable(bool isCycleable);
-
-    void AddStep(s32 step);
 
     void Increment();
 

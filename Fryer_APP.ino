@@ -69,12 +69,12 @@ byte NoCursor[] = {
 
 // Standard Timers
 u32 TIMER[] = {
-	70,
+	30,
 	1 * 60,
 	2 * 60,
-	6 * 60,
-	12 * 60,
-	16 * 60};
+	210,
+	10 * 60,
+	15 * 60};
 
 Encoder encoder(9, 10, 11);
 
@@ -84,7 +84,7 @@ Counter temp_counter(0, 200, 1, false);
 Timer timer1(TIMER[0]);
 Timer timer2(TIMER[0]);
 
-PushButton timer_switch(3, 2000);
+PushButton timer_switch(3, 3000);
 
 enum Timers
 {
@@ -143,7 +143,7 @@ void setup()
 
 	char string[14];
 	lcd.setCursor(4, 0);
-	sprintf(string, "%02d:%02d", timer1.GetTime() / 60, timer1.GetTime() % 60);
+	sprintf(string, "%02lu:%02lu", timer1.GetTime() / 60, timer1.GetTime() % 60);
 	lcd.printstr(string);
 
 	lcd.setCursor(11, 0);
@@ -153,11 +153,11 @@ void setup()
 	lcd.print("T2");
 
 	lcd.setCursor(4, 1);
-	sprintf(string, "%02d:%02d", timer2.GetTime() / 60, timer2.GetTime() % 60);
+	sprintf(string, "%02lu:%02lu", timer2.GetTime() / 60, timer2.GetTime() % 60);
 	lcd.printstr(string);
 
 	lcd.setCursor(11, 1);
-	sprintf(string, "%3d", temp_counter.GetValue());
+	sprintf(string, "%3lu", temp_counter.GetValue());
 	lcd.printstr(string);
 
 	lcd.setCursor(14, 1);
@@ -180,8 +180,8 @@ void loop()
 		lcd.print('>');
 		if (!Timers[selector_counter.GetValue()]->IsRunning())
 			Timers[selector_counter.GetValue()]->Start();
-		else
-			Timers[selector_counter.GetValue()]->Stop();
+		// else
+		// 	Timers[selector_counter.GetValue()]->Stop();
 	}
 
 	if (timer_switch.IsHeld())
@@ -201,15 +201,15 @@ void loop()
 			blinker = true;
 		char string[14];
 		lcd.setCursor(4, 0);
-		sprintf(string, "%02d%c%02d", timer1.GetTime() / 60, timer1.IsRunning() ? (blinker ? ':' : ' ') : ':', timer1.GetTime() % 60);
+		sprintf(string, "%02lu%c%02lu", timer1.GetTime() / 60, timer1.IsRunning() ? (blinker ? ':' : ' ') : ':', timer1.GetTime() % 60);
 		lcd.printstr(string);
 
 		lcd.setCursor(4, 1);
-		sprintf(string, "%02d%c%02d", timer2.GetTime() / 60, timer2.IsRunning() ? (blinker ? ':' : ' ') : ':', timer2.GetTime() % 60);
+		sprintf(string, "%02lu%c%02lu", timer2.GetTime() / 60, timer2.IsRunning() ? (blinker ? ':' : ' ') : ':', timer2.GetTime() % 60);
 		lcd.printstr(string);
 
 		lcd.setCursor(11, 1);
-		sprintf(string, "%3d", temp_counter.GetValue());
+		sprintf(string, "%3lu", temp_counter.GetValue());
 		lcd.printstr(string);
 
 		last_time = millis();
@@ -219,9 +219,8 @@ void loop()
 	{
 		// selectedTimer = selector_counter.GetValue() + SELECTOR - selectedCounter;
 
-		if (encoder.GetButton().IsToggled())
+		if (encoder.GetButton().IsToggled() && !Timers[selector_counter.GetValue()]->IsRunning())
 		{
-			Timers[selector_counter.GetValue()]->Stop();
 			lcd.setCursor(0, selector_counter.GetValue());
 			// lcd.write(3);
 			lcd.print('<');
@@ -259,7 +258,7 @@ void loop()
 
 			char string[14];
 			lcd.setCursor(4, selector_counter.GetValue());
-			sprintf(string, "%02d:%02d", Timers[selector_counter.GetValue()]->GetTime() / 60, Timers[selector_counter.GetValue()]->GetTime() % 60);
+			sprintf(string, "%02lu:%02lu", Timers[selector_counter.GetValue()]->GetTime() / 60, Timers[selector_counter.GetValue()]->GetTime() % 60);
 			lcd.printstr(string);
 		}
 		else

@@ -1,57 +1,72 @@
 #include "Counter.h"
 
-#include <assert.h>
-
-Counter::Counter(s32 min, s32 max, s32 step, bool isCycleable)
+Counter::Counter(u32 min, u32 max, u32 step, bool isCycleable)
 {
-    assert(max > min);
-    this->min = min;
-    this->max = max;
-    this->step = step;
-    if (step > 0)
-        this->value = min;
-    else
-        this->value = max;
-    this->isCycleable = isCycleable;
+    SetMin(min);
+    SetMax(max);
+    SetStep(step);
+    SetValue(min);
+    SetCycleable(isCycleable);
 }
 
-void Counter::SetValue(s32 value) { this->value = value; }
+void Counter::SetValue(u32 value)
+{
+    this->value = value;
+}
 
-s32 Counter::GetValue() const { return value; }
+u32 Counter::GetValue() const { return value; }
 
-void Counter::SetMax(s32 max) { this->max = max; }
+void Counter::SetMax(u32 max) { this->max = max; }
 
-s32 Counter::GetMax() const { return max; }
+u32 Counter::GetMax() const { return max; }
 
-void Counter::SetMin(s32 min) { this->min = min; }
+void Counter::SetMin(u32 min) { this->min = min; }
 
-s32 Counter::GetMin() const { return min; }
+u32 Counter::GetMin() const { return min; }
 
-void Counter::SetStep(s32 step) { this->step = step; }
+void Counter::SetStep(u32 step) { this->step = step; }
 
-s32 Counter::GetStep() const { return step; }
+u32 Counter::GetStep() const { return step; }
 
 void Counter::SetCycleable(bool isCycleable) { this->isCycleable = isCycleable; }
 
-void Counter::AddStep(s32 step)
+void Counter::Increment()
 {
-    value += step;
-    if (value > max)
+    if (GetValue() + step < GetValue())
     {
         if (isCycleable)
-            value -= max - min + 1;
+            SetValue(min + GetValue() + step);
         else
-            value = max;
+            SetValue(-1);
     }
-    else if (value < min)
+    else
+        SetValue(GetValue() + step);
+    if (GetValue() > max)
     {
         if (isCycleable)
-            value += max - min + 1;
+            SetValue(min + GetValue() - max - 1);
         else
-            value = min;
+            SetValue(max);
     }
 }
 
-void Counter::Increment() { AddStep(step); }
+void Counter::Decrement()
+{
+    if (GetValue() < step)
+    {
+        if (isCycleable)
+            SetValue(max - (step - GetValue()) + 1);
+        else
+            SetValue(0);
+    }
+    else
+        SetValue(GetValue() - step);
 
-void Counter::Decrement() { AddStep(-step); }
+    if (GetValue() < min)
+    {
+        if (isCycleable)
+            SetValue(max - min + GetValue() + 1);
+        else
+            SetValue(min);
+    }
+}
