@@ -194,12 +194,6 @@ void loop()
 	static u32 last_time = millis();
 	if (millis() - last_time >= REFRESH_TIME)
 	{
-		if (timer1.IsRunning())
-		{
-			char sctring[50];
-			sprintf(sctring, "%ul %d", timer1.GetTime(), timer1.IsFinished());
-			Serial.println(sctring);
-		}
 		static bool blinker = false;
 		if (timer1.IsRunning() || timer2.IsRunning())
 			blinker = !blinker;
