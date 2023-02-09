@@ -2,9 +2,9 @@
 
 #include <Arduino.h>
 
-Timer::Timer(u16 initialValue) : counter(0, initialValue, -1, false), lastUpdateTime(millis()) {}
+Timer::Timer(u32 initialValue) : counter(0, initialValue, -1, false), lastUpdateTime(millis()) {}
 
-void Timer::Set(u16 value)
+void Timer::Set(u32 value)
 {
     counter.SetMax(value);
     counter.SetValue(value);
@@ -29,7 +29,7 @@ void Timer::Reset()
     isFinished = false;
 }
 
-void Timer::SetUpdateDelay(u16 updateDelay) { this->updateDelay = updateDelay; }
+void Timer::SetUpdateDelay(u32 updateDelay) { this->updateDelay = updateDelay; }
 
 void Timer::Update()
 {
@@ -49,4 +49,4 @@ bool Timer::IsRunning() const { return isRunning; }
 
 bool Timer::IsFinished() const { return isFinished; }
 
-u16 Timer::GetTime() const { return counter.GetValue(); }
+u32 Timer::GetTime() const { return counter.GetValue(); }

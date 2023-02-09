@@ -68,10 +68,10 @@ byte NoCursor[] = {
 	B00000};
 
 // Standard Timers
-s32 TIMER[] = {
-	s32(0.5 * 60),
+u32 TIMER[] = {
+	70,
 	1 * 60,
-	s32(3.5 * 60),
+	2 * 60,
 	6 * 60,
 	12 * 60,
 	16 * 60};
@@ -194,6 +194,12 @@ void loop()
 	static u32 last_time = millis();
 	if (millis() - last_time >= REFRESH_TIME)
 	{
+		if (timer1.IsRunning())
+		{
+			char sctring[50];
+			sprintf(sctring, "%ul %d", timer1.GetTime(), timer1.IsFinished());
+			Serial.println(sctring);
+		}
 		static bool blinker = false;
 		if (timer1.IsRunning() || timer2.IsRunning())
 			blinker = !blinker;
