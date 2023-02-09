@@ -6,38 +6,15 @@
 /****** VER :        1.00         ********/
 /*****************************************/
 /*****************************************/
-#include <Wire.h> /*This library help to communicate with I2C device*/
 #include <LiquidCrystal_I2C.h>
 
-#include "Encoder_Interface.h"
-#include "PushButton_Interface.h"
-#include "Heater_Interface.h"
-
-#define DEBOUNCE_DELAY 50
+#include "Encoder.h"
+#include "Timer.h"
+#include "Heater.h"
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
-// Encoder parameters
-
-u8 A_State, A_LastState, SW, Real_counter;
-u8 Rpointer = 0, Cpointer = 0;
-u32 SW_counter = 0;
-u8 pointer_1 = 0;
-u8 temp;
-u8 timer_counter = 0;
-u8 timer_counter_1 = 0;
-
-u8 local_counter, local_counter_1;
-// Heater parameters
-const int PT1000_PIN = A0;
-const float vt_factor = 1.01;
-const float offset = -25.6;
-
-float temp_c;
-int sensor_value;
-float voltage;
-
-// Custom characters for degree
+// Custom characters for lcd
 byte degree[] = {
 	B00110,
 	B01001,
@@ -48,7 +25,26 @@ byte degree[] = {
 	B00000,
 	B00000};
 
-// Custom characters to blink
+byte obracket[] = {
+	B11100,
+	B10000,
+	B10000,
+	B10000,
+	B10000,
+	B10000,
+	B10000,
+	B11100};
+
+byte cbracket[] = {
+	B00111,
+	B00001,
+	B00001,
+	B00001,
+	B00001,
+	B00001,
+	B00001,
+	B00111};
+
 byte Cursor[] = {
 	B00000,
 	B00000,
@@ -69,14 +65,7 @@ byte NoCursor[] = {
 	B00000,
 	B00000};
 
-u8 pointer = 0, encoder_value = 0;
-
-// Timer
-u32 T_Min[2], T_Sec[2];
-u8 start_flag = 0;
-u8 pre_temp = 50;
-u8 pre_temp_1 = 50;
-u8 Start_timer[2] = {0, 0};
+// Standard Timers
 int TIMER[] = {
 	0.5 * 60,
 	1 * 60,
@@ -85,27 +74,21 @@ int TIMER[] = {
 	12 * 60,
 	16 * 60};
 
-u8 current_timer[2] = {1, 2};
-u8 ON_timer = 0, Max_time, Max_Min, Max_sec, On_pointer = 0;
+Encoder encoder(9, 10, 11);
 
-void HEATER_CONTROL(void)
-{
-	sensor_value = analogRead(PT1000_PIN);
-	voltage = sensor_value * (5.0 / 1023.0);
-	temp_c = (((voltage * 100) / vt_factor) + offset);
-	delay(500);
-}
+Counter selector_counter(0, 2, 1);
+Counter timer1_counter(0, 5, 1);
+Counter timer2_counter(0, 5, 1);
+Counter temp_counter(0, 100, 1, false);
 
-Encoder encoder;
-
-Counter selector_counter, timer1_counter, timer2_counter, temp_counter;
-
-PushButton timer_switch;
+PushButton timer_switch(13, 2000);
+// Counter_Init(&timer1_counter, 0, 24 * 60 - 1, 1);
 
 enum counter_type
 {
 	TIMER_1,
 	TIMER_2,
+	TEMP,
 	SELECTOR,
 	COUNTER_SIZE
 };
@@ -115,38 +98,23 @@ int selectedCounter = SELECTOR;
 Counter *counters[COUNTER_SIZE] = {
 	&timer1_counter,
 	&timer2_counter,
+	&temp_counter,
 	&selector_counter};
 
 void setup()
 {
-	Encoder_VidInit(&encoder, 9, 10, 11);
-
-	Counter_Init(&selector_counter, 0, 1, 1);
-	// Counter_Init(&timer1_counter, 0, 24 * 60 - 1, 1);
-	Counter_Init(&timer1_counter, 0, 5, 1);
-	Counter_Init(&timer2_counter, 0, 5, 1);
-
-	PushButton_Init(&timer_switch, 12, 2000);
-
 	Serial.begin(9600);
-	/* LCD INITIALIZATION*/
 
-	/*  The address is 0x27 (discovered using the I2C Scanner Code).
-		Number of columns is 16 and number of rows is 2                */
-
-	/* Initialize the display   */
 	lcd.init();
 
-	/* Turn on the backlight    */
 	lcd.backlight();
 
-	/* Clear the lcd            */
 	lcd.clear();
 	lcd.createChar(0, degree);
 	lcd.createChar(1, Cursor);
 	lcd.createChar(2, NoCursor);
-
-	/* Heater INITIALIZATION*/
+	lcd.createChar(3, obracket);
+	lcd.createChar(4, cbracket);
 
 	pinMode(TEMP_SENSOR, INPUT);
 	pinMode(HEATER, OUTPUT);
@@ -154,9 +122,9 @@ void setup()
 
 	lcd.clear();
 
-	lcd.setCursor(0, 1 - selector_counter.value);
+	lcd.setCursor(0, 1 - selector_counter.GetValue());
 	lcd.print(' ');
-	lcd.setCursor(0, selector_counter.value);
+	lcd.setCursor(0, selector_counter.GetValue());
 	lcd.print('>');
 
 	lcd.setCursor(1, 0);
@@ -164,7 +132,7 @@ void setup()
 
 	char time_string[6];
 	lcd.setCursor(4, 0);
-	sprintf(time_string, "%02d:%02d", TIMER[timer1_counter.value] / 60, TIMER[timer1_counter.value] % 60);
+	sprintf(time_string, "%02d:%02d", TIMER[timer1_counter.GetValue()] / 60, TIMER[timer1_counter.GetValue()] % 60);
 	lcd.printstr(time_string);
 
 	lcd.setCursor(11, 0);
@@ -174,11 +142,13 @@ void setup()
 	lcd.print("T2");
 
 	lcd.setCursor(4, 1);
-	sprintf(time_string, "%02d:%02d", TIMER[timer2_counter.value] / 60, TIMER[timer2_counter.value] % 60);
+	sprintf(time_string, "%02d:%02d", TIMER[timer2_counter.GetValue()] / 60, TIMER[timer2_counter.GetValue()] % 60);
 	lcd.printstr(time_string);
 
+	char temp_string[4];
 	lcd.setCursor(12, 1);
-	lcd.print("25");
+	sprintf(temp_string, "%3d", temp_counter.GetValue());
+	lcd.printstr(temp_string);
 
 	lcd.setCursor(14, 1);
 	lcd.write(0);
@@ -189,57 +159,77 @@ void setup()
 
 void loop()
 {
-	if (timer_switch.isToggled)
+	if (timer_switch.IsToggled())
 	{
-		
 	}
 
-	if (encoder.button.isPressed)
+	if (timer_switch.IsHeld())
 	{
-		selectedCounter = selector_counter.value + SELECTOR - selectedCounter;
+
+		timer_switch.Reset();
+	}
+
+	if (encoder.GetButton().IsPressed())
+	{
+		selectedCounter = selector_counter.GetValue() + SELECTOR - selectedCounter;
+
 		if (selectedCounter == SELECTOR)
 		{
-			lcd.setCursor(0, 1 - selector_counter.value);
+			lcd.setCursor(0, selector_counter.GetValue());
 			lcd.print(' ');
-			lcd.setCursor(0, selector_counter.value);
+			lcd.setCursor(9, selector_counter.GetValue());
+			lcd.print(' ');
+			lcd.setCursor(0, selector_counter.GetValue());
 			lcd.print('>');
 		}
 		else
 		{
-			lcd.setCursor(0, 0);
-			lcd.print(' ');
-			lcd.setCursor(0, 1);
-			lcd.print(' ');
+			lcd.setCursor(0, selector_counter.GetValue());
+			lcd.write(3);
+			lcd.setCursor(9, selector_counter.GetValue());
+			lcd.write(4);
 		}
 	}
 
-	if (Encoder_popRotationChange(&encoder))
+	if (int8_t change = encoder.popRotationChange())
 	{
+		if (change == 1)
+			counters[selectedCounter]->Increment();
+		else
+			counters[selectedCounter]->Decrement();
 		char time_string[6];
+		char temp_string[4];
 		switch (selectedCounter)
 		{
 		case SELECTOR:
-			lcd.setCursor(0, 1 - selector_counter.value);
+			lcd.setCursor(0, 1 - selector_counter.GetValue());
 			lcd.print(' ');
-			lcd.setCursor(0, selector_counter.value);
+			lcd.setCursor(0, selector_counter.GetValue());
 			lcd.print('>');
 			break;
 		case TIMER_1:
 			lcd.setCursor(4, 0);
-			sprintf(time_string, "%02d:%02d", TIMER[timer1_counter.value] / 60, TIMER[timer1_counter.value] % 60);
+			sprintf(time_string, "%02d:%02d", TIMER[timer1_counter.GetValue()] / 60, TIMER[timer1_counter.GetValue()] % 60);
 			lcd.printstr(time_string);
 			break;
 		case TIMER_2:
 			lcd.setCursor(4, 1);
-			sprintf(time_string, "%02d:%02d", TIMER[timer2_counter.value] / 60, TIMER[timer2_counter.value] % 60);
+			sprintf(time_string, "%02d:%02d", TIMER[timer2_counter.GetValue()] / 60, TIMER[timer2_counter.GetValue()] % 60);
 			lcd.printstr(time_string);
+			break;
+		case TEMP:
+			lcd.setCursor(13, 1);
+			sprintf(temp_string, "%3d", temp_counter.GetValue());
+			lcd.printstr(temp_string);
 			break;
 		}
 	}
 
-	PushButton_Update(&encoder.button);
+	timer_switch.Update();
 
-	PushButton_Update(&timer_switch);
+	encoder.Update();
 
-	Encoder_VidControl(&encoder, counters[selectedCounter]);
+	// timer1.Update(); // FIXME: timer1 is not working
+
+	// timer2.Update(); // FIXME: timer2 is not working
 }
