@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-Counter::Counter(int min, int max, int step, bool isCycleable)
+Counter::Counter(s32 min, s32 max, s32 step, bool isCycleable)
 {
     assert(max > min);
     this->min = min;
@@ -15,25 +15,25 @@ Counter::Counter(int min, int max, int step, bool isCycleable)
     this->isCycleable = isCycleable;
 }
 
-void Counter::SetValue(int value) { value = value; }
+void Counter::SetValue(s32 value) { value = value; }
 
-int Counter::GetValue() const { return value; }
+s32 Counter::GetValue() const { return value; }
 
-void Counter::SetMax(int max) { this->max = max; }
+void Counter::SetMax(s32 max) { this->max = max; }
 
-int Counter::GetMax() const { return max; }
+s32 Counter::GetMax() const { return max; }
 
-void Counter::SetMin(int min) { this->min = min; }
+void Counter::SetMin(s32 min) { this->min = min; }
 
-int Counter::GetMin() const { return min; }
+s32 Counter::GetMin() const { return min; }
 
-void Counter::SetStep(int step) { this->step = step; }
+void Counter::SetStep(s32 step) { this->step = step; }
 
-int Counter::GetStep() const { return step; }
+s32 Counter::GetStep() const { return step; }
 
 void Counter::SetCycleable(bool isCycleable) { this->isCycleable = isCycleable; }
 
-void Counter::AddStep(int step)
+void Counter::AddStep(s32 step)
 {
     value += step;
     if (value > max)

@@ -9,37 +9,39 @@
 #ifndef COUNTER_H
 #define COUNTER_H
 
+#include "tdef.h"
+
 class Counter
 {
 private:
-    int value;
-    int max;
-    int min;
-    int step;
+    s32 value;
+    s32 max;
+    s32 min;
+    s32 step;
     bool isCycleable;
 
 public:
-    Counter(int min, int max, int step, bool isCycleable = 1);
+    Counter(s32 min, s32 max, s32 step, bool isCycleable = 1);
 
-    void SetValue(int value);
+    void SetValue(s32 value);
 
-    int GetValue() const;
+    s32 GetValue() const;
 
-    void SetMax(int max);
+    void SetMax(s32 max);
 
-    int GetMax() const;
+    s32 GetMax() const;
 
-    void SetMin(int min);
+    void SetMin(s32 min);
 
-    int GetMin() const;
+    s32 GetMin() const;
 
-    void SetStep(int step);
+    void SetStep(s32 step);
 
-    int GetStep() const;
+    s32 GetStep() const;
 
     void SetCycleable(bool isCycleable);
 
-    void AddStep(int step);
+    void AddStep(s32 step);
 
     void Increment();
 

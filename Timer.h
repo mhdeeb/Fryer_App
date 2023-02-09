@@ -17,13 +17,15 @@ class Timer
 {
 private:
     Counter counter;
-    u32 updateDelay;
-    u32 lastUpdateTime;
+    u16 lastUpdateTime;
+    u16 updateDelay = 1000;
     bool isRunning = 0;
     bool isFinished = 0;
 
 public:
-    Timer(int initialValue);
+    Timer(u16 initialValue);
+
+    void Set(u16 value);
 
     void Start();
 
@@ -31,9 +33,15 @@ public:
 
     void Reset();
 
-    void SetUpdateDelay(u32 updateDelay);
+    void SetUpdateDelay(u16 updateDelay);
 
     void Update();
+
+    bool IsRunning() const;
+
+    bool IsFinished() const;
+
+    u16 GetTime() const;
 };
 
 #endif // TIMER_H

@@ -66,7 +66,7 @@ byte NoCursor[] = {
 	B00000};
 
 // Standard Timers
-int TIMER[] = {
+s32 TIMER[] = {
 	0.5 * 60,
 	1 * 60,
 	3.5 * 60,
@@ -77,9 +77,11 @@ int TIMER[] = {
 Encoder encoder(9, 10, 11);
 
 Counter selector_counter(0, 2, 1);
-Counter timer1_counter(0, 5, 1);
-Counter timer2_counter(0, 5, 1);
-Counter temp_counter(0, 100, 1, false);
+Timer timer1(TIMER[0]);
+Timer timer2(TIMER[0]);
+// Counter timer1_counter(0, 5, 1);
+// Counter timer2_counter(0, 5, 1);
+// Counter temp_counter(0, 100, 1, false);
 
 PushButton timer_switch(13, 2000);
 // Counter_Init(&timer1_counter, 0, 24 * 60 - 1, 1);
@@ -93,13 +95,13 @@ enum counter_type
 	COUNTER_SIZE
 };
 
-int selectedCounter = SELECTOR;
+// int selectedCounter = SELECTOR;
 
-Counter *counters[COUNTER_SIZE] = {
-	&timer1_counter,
-	&timer2_counter,
-	&temp_counter,
-	&selector_counter};
+// Counter *counters[COUNTER_SIZE] = {
+// 	&timer1_counter,
+// 	&timer2_counter,
+// 	&temp_counter,
+// 	&selector_counter};
 
 void setup()
 {
@@ -132,7 +134,7 @@ void setup()
 
 	char time_string[6];
 	lcd.setCursor(4, 0);
-	sprintf(time_string, "%02d:%02d", TIMER[timer1_counter.GetValue()] / 60, TIMER[timer1_counter.GetValue()] % 60);
+	// sprintf(time_string, "%02d:%02d", TIMER[timer1_counter.GetValue()] / 60, TIMER[timer1_counter.GetValue()] % 60);
 	lcd.printstr(time_string);
 
 	lcd.setCursor(11, 0);
@@ -142,12 +144,12 @@ void setup()
 	lcd.print("T2");
 
 	lcd.setCursor(4, 1);
-	sprintf(time_string, "%02d:%02d", TIMER[timer2_counter.GetValue()] / 60, TIMER[timer2_counter.GetValue()] % 60);
+	// sprintf(time_string, "%02d:%02d", TIMER[timer2_counter.GetValue()] / 60, TIMER[timer2_counter.GetValue()] % 60);
 	lcd.printstr(time_string);
 
 	char temp_string[4];
 	lcd.setCursor(12, 1);
-	sprintf(temp_string, "%3d", temp_counter.GetValue());
+	// sprintf(temp_string, "%3d", temp_counter.GetValue());
 	lcd.printstr(temp_string);
 
 	lcd.setCursor(14, 1);
@@ -159,77 +161,88 @@ void setup()
 
 void loop()
 {
+	if (timer_switch.IsPressed())
+	{
+		if (!timer1.IsRunning())
+			timer1.Start();
+		else
+			timer1.Stop();
+	}
+
 	if (timer_switch.IsToggled())
 	{
+		Serial.println(timer1.GetTime());
 	}
 
 	if (timer_switch.IsHeld())
 	{
-
+		Serial.println(timer1.IsRunning());
+		timer1.Reset();
+		timer2.Reset();
 		timer_switch.Reset();
 	}
 
 	if (encoder.GetButton().IsPressed())
 	{
-		selectedCounter = selector_counter.GetValue() + SELECTOR - selectedCounter;
+		// selectedCounter = selector_counter.GetValue() + SELECTOR - selectedCounter;
 
-		if (selectedCounter == SELECTOR)
-		{
-			lcd.setCursor(0, selector_counter.GetValue());
-			lcd.print(' ');
-			lcd.setCursor(9, selector_counter.GetValue());
-			lcd.print(' ');
-			lcd.setCursor(0, selector_counter.GetValue());
-			lcd.print('>');
-		}
-		else
-		{
-			lcd.setCursor(0, selector_counter.GetValue());
-			lcd.write(3);
-			lcd.setCursor(9, selector_counter.GetValue());
-			lcd.write(4);
-		}
+		// if (selectedCounter == SELECTOR)
+		// {
+		// 	lcd.setCursor(0, selector_counter.GetValue());
+		// 	lcd.print(' ');
+		// 	lcd.setCursor(9, selector_counter.GetValue());
+		// 	lcd.print(' ');
+		// 	lcd.setCursor(0, selector_counter.GetValue());
+		// 	lcd.print('>');
+		// }
+		// else
+		// {
+		// 	lcd.setCursor(0, selector_counter.GetValue());
+		// 	lcd.write(3);
+		// 	lcd.setCursor(9, selector_counter.GetValue());
+		// 	lcd.write(4);
+		// }
 	}
 
-	if (int8_t change = encoder.popRotationChange())
-	{
-		if (change == 1)
-			counters[selectedCounter]->Increment();
-		else
-			counters[selectedCounter]->Decrement();
-		char time_string[6];
-		char temp_string[4];
-		switch (selectedCounter)
-		{
-		case SELECTOR:
-			lcd.setCursor(0, 1 - selector_counter.GetValue());
-			lcd.print(' ');
-			lcd.setCursor(0, selector_counter.GetValue());
-			lcd.print('>');
-			break;
-		case TIMER_1:
-			lcd.setCursor(4, 0);
-			sprintf(time_string, "%02d:%02d", TIMER[timer1_counter.GetValue()] / 60, TIMER[timer1_counter.GetValue()] % 60);
-			lcd.printstr(time_string);
-			break;
-		case TIMER_2:
-			lcd.setCursor(4, 1);
-			sprintf(time_string, "%02d:%02d", TIMER[timer2_counter.GetValue()] / 60, TIMER[timer2_counter.GetValue()] % 60);
-			lcd.printstr(time_string);
-			break;
-		case TEMP:
-			lcd.setCursor(13, 1);
-			sprintf(temp_string, "%3d", temp_counter.GetValue());
-			lcd.printstr(temp_string);
-			break;
-		}
-	}
+	// if (int8_t change = encoder.popRotationChange())
+	// {
+	// 	if (change == 1)
+	// 		counters[selectedCounter]->Increment();
+	// 	else
+	// 		counters[selectedCounter]->Decrement();
+	// 	char time_string[6];
+	// 	char temp_string[4];
+	// 	switch (selectedCounter)
+	// 	{
+	// 	case SELECTOR:
+	// 		lcd.setCursor(0, 1 - selector_counter.GetValue());
+	// 		lcd.print(' ');
+	// 		lcd.setCursor(0, selector_counter.GetValue());
+	// 		lcd.print('>');
+	// 		break;
+	// 	case TIMER_1:
+	// 		lcd.setCursor(4, 0);
+	// 		sprintf(time_string, "%02d:%02d", TIMER[timer1_counter.GetValue()] / 60, TIMER[timer1_counter.GetValue()] % 60);
+	// 		lcd.printstr(time_string);
+	// 		break;
+	// 	case TIMER_2:
+	// 		lcd.setCursor(4, 1);
+	// 		sprintf(time_string, "%02d:%02d", TIMER[timer2_counter.GetValue()] / 60, TIMER[timer2_counter.GetValue()] % 60);
+	// 		lcd.printstr(time_string);
+	// 		break;
+	// 	case TEMP:
+	// 		lcd.setCursor(13, 1);
+	// 		sprintf(temp_string, "%3d", temp_counter.GetValue());
+	// 		lcd.printstr(temp_string);
+	// 		break;
+	// 	}
+	// }
 
 	timer_switch.Update();
 
 	encoder.Update();
 
-	// timer1.Update(); // FIXME: timer1 is not working
+	timer1.Update();
 
-	// timer2.Update(); // FIXME: timer2 is not working
+	timer2.Update();
 }
