@@ -15,7 +15,7 @@ Counter::Counter(s32 min, s32 max, s32 step, bool isCycleable)
     this->isCycleable = isCycleable;
 }
 
-void Counter::SetValue(s32 value) { value = value; }
+void Counter::SetValue(s32 value) { this->value = value; }
 
 s32 Counter::GetValue() const { return value; }
 

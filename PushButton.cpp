@@ -9,52 +9,51 @@ PushButton::PushButton(u8 pin, u32 holdTime)
     state = digitalRead(this->pin);
     lastState = state;
     this->holdTime = holdTime;
-    startTime = millis();
 }
 
 void PushButton::Update()
 {
-    if (millis() - startTime < debounceDelay)
-    {
-        return;
-    }
-
     lastState = state;
     state = digitalRead(pin);
-
-    if (state == LOW)
+    if (lastState != state)
+        delay(DEBOUNCE_DELAY);
+    if (lastState == HIGH && state == LOW)
     {
-        counter = millis() - startTime;
-        if (counter <= holdTime)
-        {
-            isHeld = 0;
-        }
-        else
-        {
-            isHeld = 1;
-        }
-    }
-
-    if (state == LOW && lastState == HIGH)
-    {
-        isPressed = 1;
+        isPressed = true;
         isToggled = !isToggled;
-        startTime = millis();
+        holdStartTime = millis();
     }
-    else if (state == HIGH && lastState == LOW)
+    else if (lastState == LOW && state == LOW)
     {
-        isReleased = 1;
-        isHeld = 0;
-        counter = 0;
+        isPressed = false;
+        timeHeld = millis() - holdStartTime;
+        if (timeHeld > holdTime)
+            isHeld = true;
+        else
+            isHeld = false;
     }
-    else if (state == lastState)
+    else if (lastState == LOW && state == HIGH)
     {
-        isPressed = 0;
-        isReleased = 0;
+        isPressed = false;
+        isReleased = true;
+        isHeld = false;
+        timeHeld = 0;
     }
+    else
+    {
+        isPressed = false;
+        isReleased = false;
+        isHeld = false;
+        timeHeld = 0;
+    }
+
+    // lastDebounceTime = millis();
 }
 
-bool PushButton::IsPressed() { return isPressed; }
+bool PushButton::IsPressed()
+{
+    return isPressed;
+}
 
 bool PushButton::IsReleased() { return isReleased; }
 
@@ -62,23 +61,19 @@ bool PushButton::IsHeld() { return isHeld; }
 
 bool PushButton::IsToggled() { return isToggled; }
 
-u32 PushButton::GetCounter() { return counter; }
-
-void PushButton::SetDebounceDelay(u32 delay) { debounceDelay = delay; }
-
-void PushButton::SetHoldTime(u32 holdTime) { this->holdTime = holdTime; }
+u32 PushButton::GetTimeHeld() { return timeHeld; }
 
 u8 PushButton::GetState() { return state; }
 
 u32 PushButton::GetHoldTime() { return holdTime; }
 
-u32 PushButton::GetDebounceDelay() { return debounceDelay; }
+void PushButton::SetHoldTime(u32 holdTime) { this->holdTime = holdTime; }
 
 void PushButton::Reset()
 {
-    isPressed = 0;
-    isReleased = 0;
-    isHeld = 0;
-    isToggled = 0;
-    counter = 0;
+    isPressed = false;
+    isReleased = false;
+    isHeld = false;
+    isToggled = false;
+    timeHeld = 0;
 }

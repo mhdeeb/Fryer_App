@@ -4,7 +4,11 @@
 
 Timer::Timer(u16 initialValue) : counter(0, initialValue, -1, false), lastUpdateTime(millis()) {}
 
-void Timer::Set(u16 value) { counter.SetValue(value); }
+void Timer::Set(u16 value)
+{
+    counter.SetMax(value);
+    counter.SetValue(value);
+}
 
 void Timer::Start()
 {

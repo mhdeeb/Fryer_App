@@ -18,13 +18,12 @@ private:
     u8 state;
     u8 lastState;
     u32 holdTime;
-    u32 startTime;
-    bool isPressed = 0;
-    bool isReleased = 0;
-    bool isHeld = 0;
-    bool isToggled = 0;
-    u32 counter = 0;
-    u32 debounceDelay = DEBOUNCE_DELAY;
+    u32 holdStartTime;
+    bool isPressed = false;
+    bool isReleased = false;
+    bool isHeld = false;
+    bool isToggled = false;
+    u32 timeHeld = 0;
 
 public:
     PushButton(u8 pin, u32 holdTime);
@@ -33,12 +32,10 @@ public:
     bool IsReleased();
     bool IsHeld();
     bool IsToggled();
-    u32 GetCounter();
-    void SetDebounceDelay(u32 delay);
+    u32 GetTimeHeld();
     void SetHoldTime(u32 holdTime);
     u8 GetState();
     u32 GetHoldTime();
-    u32 GetDebounceDelay();
     void Reset();
 };
 

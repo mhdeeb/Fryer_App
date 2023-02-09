@@ -3,5 +3,5 @@
     "port": "COM3",
     "programmer": "arduino:avrispmkii",
     "sketch": "Fryer_APP.ino",
-    "output": "output"
+    "output": "Output"
 }
