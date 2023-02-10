@@ -46,8 +46,6 @@ void PushButton::Update()
         isHeld = false;
         timeHeld = 0;
     }
-
-    // lastDebounceTime = millis();
 }
 
 bool PushButton::IsPressed() const { return isPressed; }

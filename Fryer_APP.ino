@@ -6,8 +6,6 @@
 /****** VER :        1.00         ********/
 /*****************************************/
 /*****************************************/
-#include <LiquidCrystal_I2C.h>
-
 #include "Encoder.h"
 #include "Timer.h"
 #include "Heater.h"
@@ -69,7 +67,7 @@ byte NoCursor[] = {
 
 // Standard Timers
 u32 TIMER[] = {
-	30,
+	3,
 	1 * 60,
 	2 * 60,
 	210,
@@ -81,10 +79,22 @@ Encoder encoder(9, 10, 11);
 Counter selector_counter(0, 1, 1);
 Counter temp_counter(0, 200, 1, false);
 
-Timer timer1(TIMER[0]);
-Timer timer2(TIMER[0]);
+Timer timer1(TIMER[0], 1, 0, "T1", nullptr);
+Timer timer2(TIMER[0], 1, 1, "T2", nullptr);
 
 PushButton timer_switch(3, 3000);
+PushButton temp_switch(4, 5000);
+PushButton editor_switch(5, 5000);
+
+note notes[]{
+	{128, 500},
+	{0, 500}};
+
+Melody melody = {
+	notes,
+	2};
+
+Alarm alarm(6, melody, 8);
 
 enum Timers
 {
@@ -130,6 +140,7 @@ void setup()
 	pinMode(TEMP_SENSOR, INPUT);
 	pinMode(HEATER, OUTPUT);
 	pinMode(ALARM, OUTPUT);
+	pinMode(6, OUTPUT);
 
 	lcd.clear();
 
@@ -138,25 +149,11 @@ void setup()
 	lcd.setCursor(0, selector_counter.GetValue());
 	lcd.print('>');
 
-	lcd.setCursor(1, 0);
-	lcd.print("T1");
-
-	char string[14];
-	lcd.setCursor(4, 0);
-	sprintf(string, "%02lu:%02lu", timer1.GetTime() / 60, timer1.GetTime() % 60);
-	lcd.printstr(string);
-
 	lcd.setCursor(11, 0);
 	lcd.print("Temp");
 
-	lcd.setCursor(1, 1);
-	lcd.print("T2");
-
-	lcd.setCursor(4, 1);
-	sprintf(string, "%02lu:%02lu", timer2.GetTime() / 60, timer2.GetTime() % 60);
-	lcd.printstr(string);
-
 	lcd.setCursor(11, 1);
+	char string[14];
 	sprintf(string, "%3lu", temp_counter.GetValue());
 	lcd.printstr(string);
 
@@ -165,6 +162,9 @@ void setup()
 
 	lcd.setCursor(15, 1);
 	lcd.print("C");
+
+	timer1.SetLCD(&lcd);
+	timer2.SetLCD(&lcd);
 }
 
 void loop()
@@ -192,6 +192,15 @@ void loop()
 		}
 	}
 
+	if ((timer1.IsFinished() && !timer1.IsBlinking()) || (timer2.IsFinished() && !timer2.IsBlinking()))
+	{
+		alarm.Start();
+		if (timer1.IsFinished())
+			timer1.StartBlinking(&melody, 8);
+		if (timer2.IsFinished())
+			timer2.StartBlinking(&melody, 8);
+	}
+
 	if (timer_switch.IsHeld())
 	{
 		encoder.GetButton().Reset();
@@ -200,29 +209,24 @@ void loop()
 		wasHeld = true;
 	}
 
-	static u32 last_time = millis();
-	if (millis() - last_time >= REFRESH_TIME)
+	if (timer_switch.IsPressed() && Timers[selector_counter.GetValue()]->IsFinished())
 	{
-		static bool blinker = false;
-		if (timer1.IsRunning() || timer2.IsRunning())
-			blinker = !blinker;
-		else
-			blinker = true;
-		char string[14];
-		lcd.setCursor(4, 0);
-		sprintf(string, "%02lu%c%02lu", timer1.GetTime() / 60, timer1.IsRunning() ? (blinker ? ':' : ' ') : ':', timer1.GetTime() % 60);
-		lcd.printstr(string);
-
-		lcd.setCursor(4, 1);
-		sprintf(string, "%02lu%c%02lu", timer2.GetTime() / 60, timer2.IsRunning() ? (blinker ? ':' : ' ') : ':', timer2.GetTime() % 60);
-		lcd.printstr(string);
-
-		lcd.setCursor(11, 1);
-		sprintf(string, "%3lu", temp_counter.GetValue());
-		lcd.printstr(string);
-
-		last_time = millis();
+		alarm.Stop();
+		Timers[selector_counter.GetValue()]->Reset();
+		if (Timers[1 - selector_counter.GetValue()]->IsFinished())
+			Timers[selector_counter.GetValue()]->Reset();
+		wasHeld = true;
 	}
+
+	// static u32 last_time = millis();
+	// if (millis() - last_time >= REFRESH_TIME)
+	// {
+	// 	lcd.setCursor(11, 1);
+	// 	sprintf(string, "%3lu", temp_counter.GetValue());
+	// 	lcd.printstr(string);
+
+	// 	last_time = millis();
+	// }
 
 	if (encoder.GetButton().IsPressed())
 	{
@@ -264,11 +268,6 @@ void loop()
 				selectedCounter %= 6;
 
 			Timers[selector_counter.GetValue()]->Set(TIMER[selectedCounter]);
-
-			char string[14];
-			lcd.setCursor(4, selector_counter.GetValue());
-			sprintf(string, "%02lu:%02lu", Timers[selector_counter.GetValue()]->GetTime() / 60, Timers[selector_counter.GetValue()]->GetTime() % 60);
-			lcd.printstr(string);
 		}
 		else
 		{
@@ -315,4 +314,6 @@ void loop()
 	timer1.Update();
 
 	timer2.Update();
+
+	alarm.Update();
 }

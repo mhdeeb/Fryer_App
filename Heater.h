@@ -11,7 +11,7 @@
 
 #define TEMP_SENSOR A0
 #define HEATER 4
-#define ALARM 8
+#define ALARM 6
 
 // Heater parameters
 const int PT1000_PIN = A0;
