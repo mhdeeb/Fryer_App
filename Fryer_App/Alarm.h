@@ -7,7 +7,7 @@
 
 #include "def.h"
 
-struct note
+struct Note
 {
     u8 note;
     u32 duration;
@@ -15,7 +15,7 @@ struct note
 
 struct Melody
 {
-    note *melody;
+    Note *melody;
     u32 length;
 };
 

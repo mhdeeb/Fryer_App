@@ -2,10 +2,8 @@
 // Path: Fryer_App/Heater.cpp
 // Link: https://github.com/mhdeeb/Fryer_App
 
-
 #include "Encoder.h"
 #include "Timer.h"
-#include "Heater.h"
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
@@ -62,13 +60,21 @@ PushButton timer_switch(3, 3000);
 PushButton temp_switch(4, 5000);
 PushButton editor_switch(5, 5000);
 
-note notes[]{
-	{128, 500},
-	{0, 500}};
+Note long_note[]{
+	{128, 400},
+	{0, 400}};
 
-Melody melody = {
-	notes,
-	2};
+Note short_note[]{
+	{200, 100},
+	{0, 100}};
+
+Melody alarm_beep = {
+	long_note,
+	sizeof(long_note) / sizeof(Note)};
+
+Melody select_beep = {
+	short_note,
+	sizeof(short_note) / sizeof(Note)};
 
 Alarm alarm(6);
 
@@ -131,7 +137,7 @@ void loop()
 	{
 		if (temp_switch.IsToggled() || onEditorMode)
 		{
-			alarm.Start(&melody);
+			alarm.Start(&select_beep);
 			lcd.backlight();
 		}
 		else
@@ -182,11 +188,11 @@ void loop()
 
 		if ((timer1.IsFinished() && !timer1.IsBlinking()) || (timer2.IsFinished() && !timer2.IsBlinking()))
 		{
-			alarm.Start(&melody, 8);
+			alarm.Start(&alarm_beep, 8);
 			if (timer1.IsFinished())
-				timer1.StartBlinking(&melody, 8);
+				timer1.StartBlinking(&alarm_beep, 8);
 			if (timer2.IsFinished())
-				timer2.StartBlinking(&melody, 8);
+				timer2.StartBlinking(&alarm_beep, 8);
 		}
 
 		if (timer_switch.IsPressed() && Timers[selector_counter.GetValue()]->IsFinished())
@@ -216,6 +222,7 @@ void loop()
 				lcd.setCursor(0, selector_counter.GetValue());
 				lcd.print('>');
 			}
+			alarm.Start(&select_beep);
 		}
 
 		if (int8_t change = encoder.popRotationChange())
@@ -246,6 +253,7 @@ void loop()
 				lcd.setCursor(0, selector_counter.GetValue());
 				lcd.print('>');
 			}
+			alarm.Start(&select_beep);
 		}
 
 		timer_switch.Update();
