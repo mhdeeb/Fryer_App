@@ -9,7 +9,7 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include "tdef.h"
+#include "def.h"
 
 #include "Counter.h"
 

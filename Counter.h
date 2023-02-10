@@ -9,7 +9,7 @@
 #ifndef COUNTER_H
 #define COUNTER_H
 
-#include "tdef.h"
+#include "def.h"
 
 class Counter
 {

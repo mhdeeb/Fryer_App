@@ -1,6 +1,5 @@
-
-#ifndef T_DEF_H
-#define T_DEF_H
+#ifndef DEF_H
+#define DEF_H
 
 typedef unsigned char u8;
 typedef unsigned short int u16;
@@ -24,4 +23,4 @@ typedef double f64;
 #define OUTPUT 0x1
 #define INPUT_PULLUP 0x2
 
-#endif // T_DEF
+#endif // DEF_H

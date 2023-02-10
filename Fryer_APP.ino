@@ -10,8 +10,6 @@
 #include "Timer.h"
 #include "Heater.h"
 
-#define REFRESH_TIME 1000
-
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 // Custom characters for lcd
@@ -24,26 +22,6 @@ byte degree[] = {
 	B00000,
 	B00000,
 	B00000};
-
-// byte obracket[] = {
-// 	B11100,
-// 	B10000,
-// 	B10000,
-// 	B10000,
-// 	B10000,
-// 	B10000,
-// 	B10000,
-// 	B11100};
-
-// byte cbracket[] = {
-// 	B00111,
-// 	B00001,
-// 	B00001,
-// 	B00001,
-// 	B00001,
-// 	B00001,
-// 	B00001,
-// 	B00111};
 
 byte Cursor[] = {
 	B00000,
@@ -67,16 +45,17 @@ byte NoCursor[] = {
 
 // Standard Timers
 u32 TIMER[] = {
-	3,
+	30,
 	1 * 60,
 	2 * 60,
-	210,
+	300,
 	10 * 60,
 	15 * 60};
 
 Encoder encoder(9, 10, 11);
 
 Counter selector_counter(0, 1, 1);
+Counter editor_selector(0, 6, 1);
 Counter temp_counter(0, 200, 1, false);
 
 Timer timer1(TIMER[0], 1, 0, "T1", nullptr);
@@ -94,7 +73,7 @@ Melody melody = {
 	notes,
 	2};
 
-Alarm alarm(6, melody, 8);
+Alarm alarm(6);
 
 enum Timers
 {
@@ -106,36 +85,16 @@ Timer *Timers[] = {
 	&timer1,
 	&timer2};
 
-// Counter timer1_counter(0, 5, 1);
-// Counter timer2_counter(0, 5, 1);
-
-// enum Counters
-// {
-// 	TIMER_1_COUNTER,
-// 	TIMER_2_COUNTER,
-// 	SELECTOR,
-// 	COUNTER_SIZE
-// };
-
-// Counter *counters[COUNTER_SIZE] = {
-// 	&timer1_counter,
-// 	&timer2_counter,
-// 	&selector_counter};
-
 void setup()
 {
 	Serial.begin(9600);
 
 	lcd.init();
 
-	lcd.backlight();
-
 	lcd.clear();
 	lcd.createChar(0, degree);
 	lcd.createChar(1, Cursor);
 	lcd.createChar(2, NoCursor);
-	// lcd.createChar(3, obracket);
-	// lcd.createChar(4, cbracket);
 
 	pinMode(TEMP_SENSOR, INPUT);
 	pinMode(HEATER, OUTPUT);
@@ -169,151 +128,141 @@ void setup()
 
 void loop()
 {
-	static bool wasHeld = false;
-	if (timer_switch.IsReleased())
+	static bool editorMode = false;
+	static bool onEditorMode = false;
+	if (temp_switch.IsPressed() || onEditorMode)
 	{
-		if (!wasHeld)
+		if (temp_switch.IsToggled() || onEditorMode)
+		{
+			alarm.Start(&melody);
+			lcd.backlight();
+		}
+		else
+			lcd.noBacklight();
+		onEditorMode = false;
+	}
+
+	if (editor_switch.IsHeld() && !editorMode)
+	{
+		editorMode = true;
+		onEditorMode = true;
+		editor_switch.Reset();
+	}
+
+	if (editor_switch.IsReleased() && editorMode)
+	{
+		editorMode = false;
+	}
+
+	if (temp_switch.IsToggled() || editor_switch.IsToggled())
+	{
+		static bool wasHeld = false;
+		if (timer_switch.IsReleased())
+		{
+			if (!wasHeld)
+			{
+				encoder.GetButton().Reset();
+				lcd.setCursor(0, selector_counter.GetValue());
+				lcd.print(' ');
+				lcd.setCursor(9, selector_counter.GetValue());
+				lcd.print(' ');
+				lcd.setCursor(0, selector_counter.GetValue());
+				lcd.print('>');
+				if (!Timers[selector_counter.GetValue()]->IsRunning())
+					Timers[selector_counter.GetValue()]->Start();
+			}
+			else
+				wasHeld = false;
+		}
+
+		if (timer_switch.IsHeld())
 		{
 			encoder.GetButton().Reset();
-			lcd.setCursor(0, selector_counter.GetValue());
-			lcd.print(' ');
-			lcd.setCursor(9, selector_counter.GetValue());
-			lcd.print(' ');
-			lcd.setCursor(0, selector_counter.GetValue());
-			lcd.print('>');
-			if (!Timers[selector_counter.GetValue()]->IsRunning())
-				Timers[selector_counter.GetValue()]->Start();
-			// else
-			// 	Timers[selector_counter.GetValue()]->Stop();
-		}
-		else
-		{
-			wasHeld = false;
-		}
-	}
-
-	if ((timer1.IsFinished() && !timer1.IsBlinking()) || (timer2.IsFinished() && !timer2.IsBlinking()))
-	{
-		alarm.Start();
-		if (timer1.IsFinished())
-			timer1.StartBlinking(&melody, 8);
-		if (timer2.IsFinished())
-			timer2.StartBlinking(&melody, 8);
-	}
-
-	if (timer_switch.IsHeld())
-	{
-		encoder.GetButton().Reset();
-		Timers[selector_counter.GetValue()]->Reset();
-		timer_switch.Reset();
-		wasHeld = true;
-	}
-
-	if (timer_switch.IsPressed() && Timers[selector_counter.GetValue()]->IsFinished())
-	{
-		alarm.Stop();
-		Timers[selector_counter.GetValue()]->Reset();
-		if (Timers[1 - selector_counter.GetValue()]->IsFinished())
 			Timers[selector_counter.GetValue()]->Reset();
-		wasHeld = true;
+			timer_switch.Reset();
+			wasHeld = true;
+		}
+
+		if ((timer1.IsFinished() && !timer1.IsBlinking()) || (timer2.IsFinished() && !timer2.IsBlinking()))
+		{
+			alarm.Start(&melody, 8);
+			if (timer1.IsFinished())
+				timer1.StartBlinking(&melody, 8);
+			if (timer2.IsFinished())
+				timer2.StartBlinking(&melody, 8);
+		}
+
+		if (timer_switch.IsPressed() && Timers[selector_counter.GetValue()]->IsFinished())
+		{
+			alarm.Stop();
+			Timers[selector_counter.GetValue()]->Reset();
+			if (Timers[1 - selector_counter.GetValue()]->IsFinished())
+				Timers[selector_counter.GetValue()]->Reset();
+			wasHeld = true;
+		}
+
+		if (encoder.GetButton().IsPressed())
+		{
+			if (encoder.GetButton().IsToggled() && !Timers[selector_counter.GetValue()]->IsRunning())
+			{
+				lcd.setCursor(0, selector_counter.GetValue());
+				lcd.print('<');
+				lcd.setCursor(9, selector_counter.GetValue());
+				lcd.print('>');
+			}
+			else
+			{
+				lcd.setCursor(0, selector_counter.GetValue());
+				lcd.print(' ');
+				lcd.setCursor(9, selector_counter.GetValue());
+				lcd.print(' ');
+				lcd.setCursor(0, selector_counter.GetValue());
+				lcd.print('>');
+			}
+		}
+
+		if (int8_t change = encoder.popRotationChange())
+		{
+			if (encoder.GetButton().IsToggled() && !Timers[selector_counter.GetValue()]->IsRunning())
+			{
+				static s8 selectedCounter = 0;
+				if (change == 1)
+					selectedCounter++;
+				else
+					selectedCounter--;
+
+				if (selectedCounter < 0)
+					selectedCounter = 5;
+				else
+					selectedCounter %= 6;
+
+				Timers[selector_counter.GetValue()]->Set(TIMER[selectedCounter]);
+			}
+			else
+			{
+				if (change == 1)
+					selector_counter.Increment();
+				else
+					selector_counter.Decrement();
+				lcd.setCursor(0, 1 - selector_counter.GetValue());
+				lcd.print(' ');
+				lcd.setCursor(0, selector_counter.GetValue());
+				lcd.print('>');
+			}
+		}
+
+		timer_switch.Update();
+
+		encoder.Update();
+
+		timer1.Update();
+
+		timer2.Update();
 	}
 
-	// static u32 last_time = millis();
-	// if (millis() - last_time >= REFRESH_TIME)
-	// {
-	// 	lcd.setCursor(11, 1);
-	// 	sprintf(string, "%3lu", temp_counter.GetValue());
-	// 	lcd.printstr(string);
+	temp_switch.Update();
 
-	// 	last_time = millis();
-	// }
-
-	if (encoder.GetButton().IsPressed())
-	{
-		// selectedTimer = selector_counter.GetValue() + SELECTOR - selectedCounter;
-
-		if (encoder.GetButton().IsToggled() && !Timers[selector_counter.GetValue()]->IsRunning())
-		{
-			lcd.setCursor(0, selector_counter.GetValue());
-			// lcd.write(3);
-			lcd.print('<');
-			lcd.setCursor(9, selector_counter.GetValue());
-			// lcd.write(4);
-			lcd.print('>');
-		}
-		else
-		{
-			lcd.setCursor(0, selector_counter.GetValue());
-			lcd.print(' ');
-			lcd.setCursor(9, selector_counter.GetValue());
-			lcd.print(' ');
-			lcd.setCursor(0, selector_counter.GetValue());
-			lcd.print('>');
-		}
-	}
-
-	if (int8_t change = encoder.popRotationChange())
-	{
-		if (encoder.GetButton().IsToggled() && !Timers[selector_counter.GetValue()]->IsRunning())
-		{
-			static s8 selectedCounter = 0;
-			if (change == 1)
-				selectedCounter++;
-			else
-				selectedCounter--;
-
-			if (selectedCounter < 0)
-				selectedCounter = 5;
-			else
-				selectedCounter %= 6;
-
-			Timers[selector_counter.GetValue()]->Set(TIMER[selectedCounter]);
-		}
-		else
-		{
-			if (change == 1)
-				selector_counter.Increment();
-			else
-				selector_counter.Decrement();
-			lcd.setCursor(0, 1 - selector_counter.GetValue());
-			lcd.print(' ');
-			lcd.setCursor(0, selector_counter.GetValue());
-			lcd.print('>');
-		}
-		// if (change == 1)
-		// 	counters[selectedCounter]->Increment();
-		// else
-		// 	counters[selectedCounter]->Decrement();
-		// char string[14];
-		// if (selectedCounter == SELECTOR)
-		// {
-		// 	lcd.setCursor(0, 1 - selector_counter.GetValue());
-		// 	lcd.print(' ');
-		// 	lcd.setCursor(0, selector_counter.GetValue());
-		// 	lcd.print('>');
-		// }
-		// else
-		// {
-		// 	counters[selectedCounter]->SetValue(TIMER[timer1_counter.GetValue()]);
-		// 	sprintf(string, "%02d:%02d", counters[selectedCounter]->GetValue() / 60, counters[selectedCounter]->GetValue() % 60);
-		// 	lcd.setCursor(4, selectedCounter);
-		// 	lcd.printstr(string);
-		// }
-
-		// case TEMP:
-		// 	lcd.setCursor(13, 1);
-		// 	sprintf(temp_string, "%3d", temp_counter.GetValue());
-		// 	lcd.printstr(temp_string);
-		// 	break;
-	}
-
-	timer_switch.Update();
-
-	encoder.Update();
-
-	timer1.Update();
-
-	timer2.Update();
+	editor_switch.Update();
 
 	alarm.Update();
 }

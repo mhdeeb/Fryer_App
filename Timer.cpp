@@ -105,7 +105,7 @@ bool Timer::IsFinished() const { return isFinished; }
 
 u32 Timer::GetTime() const { return counter.GetValue(); }
 
-void Timer::StartBlinking(Melody *melody, u32 playCount)
+void Timer::StartBlinking(Melody *melody, u32 playCount = 1)
 {
     this->playCount = playCount;
     this->playIndex = 0;

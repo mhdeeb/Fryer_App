@@ -9,7 +9,7 @@
 #ifndef ALARM_H
 #define ALARM_H_H
 
-#include "tdef.h"
+#include "def.h"
 
 struct note
 {
@@ -27,7 +27,7 @@ class Alarm
 {
 private:
     u8 pin;
-    Melody melody;
+    Melody *melody;
     u32 playCount;
     bool isOn = false;
     u32 melodyIndex = 0;
@@ -35,13 +35,13 @@ private:
     u32 lastTime = 0;
 
 public:
-    Alarm(u8 pin, Melody melody, u32 playCount = 1);
+    Alarm(u8 pin);
     void Update();
     bool IsOn() const;
-    void Start();
+    void Start(Melody *melody, u32 playCount = 1);
     void Stop();
     u8 GetPin() const;
-    Melody GetMelody();
+    Melody *GetMelody();
 };
 
 #endif // ALARMs_H
