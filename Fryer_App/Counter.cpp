@@ -1,3 +1,7 @@
+// Date: 10/FEB/2022
+// Path: Fryer_App/Counter.cpp
+// Link: https://github.com/mhdeeb/Fryer_App
+
 #include "Counter.h"
 
 Counter::Counter(u32 min, u32 max, u32 step, bool isCycleable)

@@ -1,3 +1,7 @@
+// Date: 10/FEB/2022
+// Path: Fryer_App/Timer.cpp
+// Link: https://github.com/mhdeeb/Fryer_App
+
 #include "Timer.h"
 
 #include <Arduino.h>

@@ -1,11 +1,7 @@
-/*****************************************/
-/*****************************************/
-/****** By  : Abdelrahman Mohamed ********/
-/****** Date:     7/DEC/2022      ********/
-/****** SWC :     PushButton      ********/
-/****** VER :        1.00         ********/
-/*****************************************/
-/*****************************************/
+// Date: 10/FEB/2022
+// Path: Fryer_App/PushButton.h
+// Link: https://github.com/mhdeeb/Fryer_App
+
 #ifndef PUSH_BUTTON_H
 #define PUSH_BUTTON_H
 

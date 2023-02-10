@@ -1,11 +1,8 @@
-/*****************************************/
-/*****************************************/
-/****** By  : Abdelrahman Mohamed ********/
-/****** Date:     7/DEC/2022      ********/
-/****** SWC : FRYER_APPLICATION   ********/
-/****** VER :        1.00         ********/
-/*****************************************/
-/*****************************************/
+// Date: 10/FEB/2022
+// Path: Fryer_App/Heater.cpp
+// Link: https://github.com/mhdeeb/Fryer_App
+
+
 #include "Encoder.h"
 #include "Timer.h"
 #include "Heater.h"

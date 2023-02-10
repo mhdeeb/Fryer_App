@@ -1,11 +1,7 @@
-/*****************************************/
-/*****************************************/
-/****** By  : Abdelrahman Mohamed ********/
-/****** Date:     7/DEC/2022      ********/
-/****** SWC :       Heater        ********/
-/****** VER :        1.00         ********/
-/*****************************************/
-/*****************************************/
+// Date: 10/FEB/2022
+// Path: Fryer_App/Heater.h
+// Link: https://github.com/mhdeeb/Fryer_App
+
 #ifndef HEATER_INTERFACE_H
 #define HEATER_INTERFACE_H
 

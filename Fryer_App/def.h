@@ -1,3 +1,7 @@
+// Date: 10/FEB/2022
+// Path: Fryer_App/def.h
+// Link: https://github.com/mhdeeb/Fryer_App
+
 #ifndef DEF_H
 #define DEF_H
 
