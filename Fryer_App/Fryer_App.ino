@@ -6,6 +6,7 @@
 #include "Timer.h"
 
 // FIXME: hold to close temp if timer is running
+// FIXME: Timer not working
 
 #define ENCODER_PIN_A 9
 #define ENCODER_PIN_B 10
@@ -227,6 +228,9 @@ void loop()
 			else
 				lcd.noBacklight();
 		}
+	}
+	else if (temp_switch.IsHeld())
+	{
 	}
 	else if (editor_switch.IsPressed())
 	{
@@ -487,10 +491,10 @@ void loop()
 
 	alarm.Update();
 
-	encoder.Update();
-
 	if (edit_column == 0)
 		encoder.UnlockCounter();
 	else
 		encoder.LockCounter();
+
+	encoder.Update();
 }
