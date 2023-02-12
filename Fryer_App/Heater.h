@@ -20,6 +20,11 @@ float voltage;
 
 void HEATER_CONTROL(void)
 {
+
+    pinMode(TEMP_SENSOR, INPUT);
+    pinMode(HEATER, OUTPUT);
+    pinMode(ALARM, OUTPUT);
+    pinMode(6, OUTPUT);
     sensor_value = analogRead(PT1000_PIN);
     voltage = sensor_value * (5.0 / 1023.0);
     temp_c = (((voltage * 100) / vt_factor) + offset);

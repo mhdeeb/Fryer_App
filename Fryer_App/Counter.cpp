@@ -4,18 +4,19 @@
 
 #include "Counter.h"
 
-Counter::Counter(u32 min, u32 max, u32 step, bool isCycleable)
+Counter::Counter(u32 min, u32 max, u32 initialValue, u32 step, bool isCycleable)
 {
     SetMin(min);
     SetMax(max);
     SetStep(step);
-    SetValue(min);
+    SetValue(initialValue);
     SetCycleable(isCycleable);
 }
 
 void Counter::SetValue(u32 value)
 {
-    this->value = value;
+    if (!isLocked)
+        this->value = value;
 }
 
 u32 Counter::GetValue() const { return value; }
@@ -34,6 +35,8 @@ u32 Counter::GetStep() const { return step; }
 
 void Counter::SetCycleable(bool isCycleable) { this->isCycleable = isCycleable; }
 
+bool Counter::IsCycleable() const { return isCycleable; }
+
 void Counter::Increment()
 {
     if (GetValue() + step < GetValue())
@@ -45,6 +48,7 @@ void Counter::Increment()
     }
     else
         SetValue(GetValue() + step);
+
     if (GetValue() > max)
     {
         if (isCycleable)
@@ -73,4 +77,22 @@ void Counter::Decrement()
         else
             SetValue(min);
     }
+}
+
+void Counter::Reset(u8 value)
+{
+    if (value == 1)
+        SetValue(max);
+    else if (value == 0)
+        SetValue(min);
+}
+
+void Counter::Lock()
+{
+    isLocked = true;
+}
+
+void Counter::Unlock()
+{
+    isLocked = false;
 }

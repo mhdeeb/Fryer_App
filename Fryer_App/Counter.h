@@ -15,9 +15,10 @@ private:
     u32 min;
     u32 step;
     bool isCycleable;
+    bool isLocked = false;
 
 public:
-    Counter(u32 min, u32 max, u32 step, bool isCycleable = 1);
+    Counter(u32 min, u32 max, u32 initialValue = 0, u32 step = 1, bool isCycleable = true);
 
     void SetValue(u32 value);
 
@@ -37,9 +38,17 @@ public:
 
     void SetCycleable(bool isCycleable);
 
+    bool IsCycleable() const;
+
     void Increment();
 
     void Decrement();
+
+    void Reset(u8 value = 0);
+
+    void Lock();
+
+    void Unlock();
 };
 
 #endif // COUNTER_H

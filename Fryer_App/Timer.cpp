@@ -6,7 +6,7 @@
 
 #include <Arduino.h>
 
-Timer::Timer(u32 initialValue, u32 col, u32 row, const char *name, LiquidCrystal_I2C *lcd) : counter(0, initialValue, 1, false), col(col), row(row), name(name), lcd(lcd), lastUpdateTime(millis())
+Timer::Timer(u32 initialValue, u32 col, u32 row, const char *name, LiquidCrystal_I2C *lcd) : counter(0, initialValue, initialValue, 1, false), col(col), row(row), name(name), lcd(lcd), lastUpdateTime(millis())
 {
     counter.SetValue(initialValue);
     Draw();

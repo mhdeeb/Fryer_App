@@ -31,7 +31,7 @@ void PushButton::Update()
     {
         isPressed = false;
         timeHeld = millis() - holdStartTime;
-        if (timeHeld > holdTime)
+        if (timeHeld > holdTime && !wasReseted)
             isHeld = true;
         else
             isHeld = false;
@@ -40,6 +40,7 @@ void PushButton::Update()
     {
         isPressed = false;
         isReleased = true;
+        wasReseted = false;
         isHeld = false;
         timeHeld = 0;
     }
@@ -58,6 +59,8 @@ bool PushButton::IsReleased() const { return isReleased; }
 
 bool PushButton::IsHeld() const { return isHeld; }
 
+void PushButton::SetToggle(bool toggle) { isToggled = toggle; }
+
 bool PushButton::IsToggled() const { return isToggled; }
 
 u32 PushButton::GetTimeHeld() const { return timeHeld; }
@@ -74,5 +77,6 @@ void PushButton::Reset()
     isReleased = false;
     isHeld = false;
     isToggled = false;
+    wasReseted = true;
     timeHeld = 0;
 }
