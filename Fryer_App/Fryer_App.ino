@@ -95,6 +95,7 @@ Timer Timers[]{
 };
 
 Counter selector_counter(0, sizeof(Timers) / sizeof(Timer) - 1);
+Counter time_selector(0, sizeof(times) / sizeof(u32) - 1);
 Counter editor_selector(0, sizeof(times) / sizeof(u32));
 Counter temp_counter(MIN_TEMP, MAX_TEMP, DEFAULT_TEMP, 1, false);
 
@@ -179,7 +180,7 @@ void loop()
 			}
 		}
 
-		if (editor_switch.IsHeld() && !temp_switch.IsToggled())
+		if (editor_switch.Get(PushButtonInterface::HELD) && !temp_switch.Get(PushButtonInterface::TOGGLED))
 		{
 			editorMode = true;
 			alarm.Start(&select_beep);
@@ -202,14 +203,14 @@ void loop()
 			lcd.setCursor(1, 1);
 			lcd.printstr(string);
 
-			editor_switch.Reset();
+			editor_switch.Set(PushButtonInterface::RESETED);
 
 			encoder.SetCounter(&editor_selector);
 			encoder.Reset();
 		}
-		else if (temp_switch.IsPressed() && !isAnyTimerRunning)
+		else if (temp_switch.Get(PushButtonInterface::PRESSED) && !isAnyTimerRunning)
 		{
-			if (temp_switch.IsToggled())
+			if (temp_switch.Get(PushButtonInterface::TOGGLED))
 			{
 				timer_switch.Reset();
 				encoder.SetCounter(&selector_counter);
@@ -227,14 +228,14 @@ void loop()
 			else
 				lcd.noBacklight();
 		}
-		if (temp_switch.IsHeld())
+		if (temp_switch.Get(PushButtonInterface::HELD))
 		{
 		}
-		else if (temp_switch.IsReleased())
+		else if (temp_switch.Get(PushButtonInterface::RELEASED))
 		{
 		}
 	}
-	else if (editor_switch.IsPressed())
+	else if (editor_switch.Get(PushButtonInterface::PRESSED))
 	{
 		editorMode = false;
 		lcd.setCursor(0, 0);
@@ -263,13 +264,13 @@ void loop()
 		}
 	}
 
-	if (editorMode || temp_switch.IsToggled())
+	if (editorMode || temp_switch.Get(PushButtonInterface::TOGGLED))
 	{
 		int8_t change = encoder.popRotationChange();
 
 		if (editorMode)
 		{
-			if (encoder.GetButton().IsPressed())
+			if (encoder.GetButton().Get(PushButtonInterface::PRESSED))
 			{
 				edit_column++;
 
@@ -384,7 +385,7 @@ void loop()
 		}
 		else
 		{
-			if (timer_switch.IsPressed())
+			if (timer_switch.Get(PushButtonInterface::PRESSED))
 			{
 				lcd.setCursor(0, selector_counter.GetValue());
 				lcd.print(' ');
@@ -405,27 +406,24 @@ void loop()
 				{
 					alarm.Start(&start_beep);
 					if (!isAnyFinished)
-					{
 						Timers[selector_counter.GetValue()].Start();
-						timer_switch.Reset();
-					}
 				}
 			}
-			else if (timer_switch.IsHeld())
+			else if (timer_switch.Get(PushButtonInterface::HELD))
 			{
 				Timers[selector_counter.GetValue()].Reset();
-				timer_switch.Reset();
+				timer_switch.Set(PushButtonInterface::RESETED);
 				alarm.Start(&start_beep);
 			}
 
-			if (timer_switch.IsReleased() && Timers[selector_counter.GetValue()].IsRunning())
+			if (timer_switch.Get(PushButtonInterface::RELEASED) && Timers[selector_counter.GetValue()].IsRunning())
 				alarm.Start(&error_beep, 2);
 
-			if (encoder.GetButton().IsPressed())
+			if (encoder.GetButton().Get(PushButtonInterface::PRESSED))
 			{
 				if (!Timers[selector_counter.GetValue()].IsRunning())
 				{
-					if (encoder.GetButton().IsToggled())
+					if (encoder.GetButton().Get(PushButtonInterface::TOGGLED))
 					{
 						lcd.setCursor(0, selector_counter.GetValue());
 						lcd.write(OLD_LEFT_CURSOR);
@@ -445,14 +443,14 @@ void loop()
 				}
 				else
 				{
-					encoder.Reset();
+					encoder.GetButton().Reset(PushButtonInterface::TOGGLED);
 					alarm.Start(&error_beep, 2);
 				}
 			}
 
 			if (change)
 			{
-				if (encoder.GetButton().IsToggled() && !Timers[selector_counter.GetValue()].IsRunning())
+				if (encoder.GetButton().Get(PushButtonInterface::TOGGLED) && !Timers[selector_counter.GetValue()].IsRunning())
 				{
 					if (change == 1) // FIXME: This is a hack
 						selector_counter.Decrement();

@@ -9,6 +9,16 @@
 
 #include "def.h"
 
+enum class PushButtonInterface : u8
+{
+    PRESSED,
+    RELEASED,
+    HELD,
+    TOGGLED,
+    RESETED,
+    ALL
+};
+
 class PushButton
 {
 private:
@@ -27,16 +37,14 @@ private:
 public:
     PushButton(u8 pin, u32 holdTime);
     void Update();
-    bool IsPressed() const;
-    bool IsReleased() const;
-    bool IsHeld() const;
-    void SetToggle(bool toggle);
-    bool IsToggled() const;
+    bool Get(PushButtonInterface state) const;
+    void Set(PushButtonInterface state, bool value = true);
+    void Reset(PushButtonInterface state = PushButtonInterface::ALL);
     u32 GetTimeHeld() const;
+    void ResetTimeHeld();
     void SetHoldTime(u32 holdTime);
     u8 GetState() const;
     u32 GetHoldTime() const;
-    void Reset();
 };
 
 #endif // PUSH_BUTTON_H

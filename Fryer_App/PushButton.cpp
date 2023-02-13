@@ -55,30 +55,83 @@ void PushButton::Update()
     }
 }
 
-bool PushButton::IsPressed() const { return isPressed; }
+bool PushButton::Get(PushButtonInterface state) const
+{
+    switch (state)
+    {
+    case PushButtonInterface::PRESSED:
+        return isPressed;
+    case PushButtonInterface::RELEASED:
+        return isReleased;
+    case PushButtonInterface::HELD:
+        return isHeld;
+    case PushButtonInterface::TOGGLED:
+        return isToggled;
+    case PushButtonInterface::RESETED:
+        return wasReseted;
+    default:
+        return false;
+    }
+}
 
-bool PushButton::IsReleased() const { return isReleased; }
+void PushButton::Set(PushButtonInterface state, bool value)
+{
+    switch (state)
+    {
+    case PushButtonInterface::PRESSED:
+        isPressed = value;
+    case PushButtonInterface::RELEASED:
+        isReleased = value;
+    case PushButtonInterface::HELD:
+        isHeld = value;
+    case PushButtonInterface::TOGGLED:
+        isToggled = value;
+    case PushButtonInterface::RESETED:
+        wasReseted = value;
+    case PushButtonInterface::ALL:
+    default:
+        isPressed = value;
+        isReleased = value;
+        isHeld = value;
+        isToggled = value;
+        wasReseted = value;
+    }
+}
 
-bool PushButton::IsHeld() const { return isHeld; }
-
-void PushButton::SetToggle(bool toggle) { isToggled = toggle; }
-
-bool PushButton::IsToggled() const { return isToggled; }
+void PushButton::Reset(PushButtonInterface state)
+{
+    switch (state)
+    {
+    case PushButtonInterface::PRESSED:
+        isPressed = false;
+    case PushButtonInterface::RELEASED:
+        isReleased = false;
+    case PushButtonInterface::HELD:
+        isHeld = false;
+    case PushButtonInterface::TOGGLED:
+        isToggled = false;
+    case PushButtonInterface::RESETED:
+        wasReseted = true;
+    case PushButtonInterface::ALL:
+    default:
+        isPressed = false;
+        isReleased = false;
+        isHeld = false;
+        isToggled = false;
+        wasReseted = true;
+    }
+}
 
 u32 PushButton::GetTimeHeld() const { return timeHeld; }
+
+void PushButton::ResetTimeHeld()
+{
+    timeHeld = 0;
+    wasReseted = true;
+}
 
 u8 PushButton::GetState() const { return state; }
 
 u32 PushButton::GetHoldTime() const { return holdTime; }
 
 void PushButton::SetHoldTime(u32 holdTime) { this->holdTime = holdTime; }
-
-void PushButton::Reset()
-{
-    isPressed = false;
-    isReleased = false;
-    isHeld = false;
-    isToggled = false;
-    wasReseted = true;
-    timeHeld = 0;
-}
