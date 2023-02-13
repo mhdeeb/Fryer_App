@@ -39,8 +39,10 @@ void PushButton::Update()
     else if (lastState == LOW && state == HIGH)
     {
         isPressed = false;
-        isReleased = true;
-        wasReseted = false;
+        if (!wasReseted)
+            isReleased = true;
+        else
+            wasReseted = false;
         isHeld = false;
         timeHeld = 0;
     }

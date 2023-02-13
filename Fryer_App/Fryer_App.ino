@@ -5,9 +5,6 @@
 #include "Encoder.h"
 #include "Timer.h"
 
-// FIXME: hold to close temp if timer is running
-// FIXME: Timer not working
-
 #define ENCODER_PIN_A 9
 #define ENCODER_PIN_B 10
 #define ENCODER_PIN_BTN 11
@@ -15,9 +12,11 @@
 #define TEMP_SWITCH_PIN 4
 #define EDITOR_SWITCH_PIN 5
 #define ALARM_PIN 6
+
 #define MAX_TEMP 100
 #define MIN_TEMP 0
 #define DEFAULT_TEMP 37
+
 #define DEGREE 0
 #define OLD_LEFT_CURSOR 1
 #define LEFT_CURSOR 0x7F
@@ -27,15 +26,6 @@
 #define DOWN_CURSOR 4
 
 // Custom characters for lcd
-// byte degree[] = {
-// 	B00110,
-// 	B01001,
-// 	B00110,
-// 	B00000,
-// 	B00000,
-// 	B00000,
-// 	B00000,
-// 	B00000};
 
 byte degree[] = {
 	B01000,
@@ -170,7 +160,6 @@ void setup()
 	sprintf(string, "%3lu", temp_counter.GetValue());
 	lcd.printstr(string);
 	lcd.write(DEGREE);
-	// lcd.print("C");
 
 	for (Timer &timer : Timers)
 		timer.SetLCD(&lcd);
@@ -180,6 +169,16 @@ void loop()
 {
 	if (!editorMode)
 	{
+		bool isAnyTimerRunning = false;
+		for (Timer &timer : Timers)
+		{
+			if (timer.IsRunning())
+			{
+				isAnyTimerRunning = true;
+				break;
+			}
+		}
+
 		if (editor_switch.IsHeld() && !temp_switch.IsToggled())
 		{
 			editorMode = true;
@@ -208,7 +207,7 @@ void loop()
 			encoder.SetCounter(&editor_selector);
 			encoder.Reset();
 		}
-		else if (temp_switch.IsPressed())
+		else if (temp_switch.IsPressed() && !isAnyTimerRunning)
 		{
 			if (temp_switch.IsToggled())
 			{
@@ -228,9 +227,12 @@ void loop()
 			else
 				lcd.noBacklight();
 		}
-	}
-	else if (temp_switch.IsHeld())
-	{
+		if (temp_switch.IsHeld())
+		{
+		}
+		else if (temp_switch.IsReleased())
+		{
+		}
 	}
 	else if (editor_switch.IsPressed())
 	{
@@ -254,7 +256,6 @@ void loop()
 		sprintf(string, "%3lu", temp_counter.GetValue());
 		lcd.printstr(string);
 		lcd.write(DEGREE);
-		// lcd.print("C");
 		for (Timer &timer : Timers)
 		{
 			timer.Set(times[0]);
@@ -383,8 +384,6 @@ void loop()
 		}
 		else
 		{
-			// if (timer_switch.IsPressed() && !Timers[selector_counter.GetValue()].IsRunning()) // FIXME: Timer needs to beep when pressed why running
-			// 	alarm.Start(&error_beep, 2);
 			if (timer_switch.IsPressed())
 			{
 				lcd.setCursor(0, selector_counter.GetValue());
@@ -394,15 +393,23 @@ void loop()
 				lcd.setCursor(0, selector_counter.GetValue());
 				lcd.write(RIGHT_CURSOR);
 
-				if (!Timers[selector_counter.GetValue()].IsRunning())
-					alarm.Start(&start_beep);
-
-				if (!(Timers[selector_counter.GetValue()].IsRunning() || Timers[selector_counter.GetValue()].IsFinished()))
-					Timers[selector_counter.GetValue()].Start();
-
+				bool isAnyFinished = false;
 				for (Timer &timer : Timers)
 					if (timer.IsFinished())
+					{
+						isAnyFinished = true;
 						timer.Reset();
+					}
+
+				if (!Timers[selector_counter.GetValue()].IsRunning())
+				{
+					alarm.Start(&start_beep);
+					if (!isAnyFinished)
+					{
+						Timers[selector_counter.GetValue()].Start();
+						timer_switch.Reset();
+					}
+				}
 			}
 			else if (timer_switch.IsHeld())
 			{
@@ -410,6 +417,9 @@ void loop()
 				timer_switch.Reset();
 				alarm.Start(&start_beep);
 			}
+
+			if (timer_switch.IsReleased() && Timers[selector_counter.GetValue()].IsRunning())
+				alarm.Start(&error_beep, 2);
 
 			if (encoder.GetButton().IsPressed())
 			{
@@ -467,6 +477,10 @@ void loop()
 					lcd.print(' ');
 					lcd.setCursor(0, selector_counter.GetValue());
 					lcd.write(RIGHT_CURSOR);
+
+					for (Timer &timer : Timers)
+						if (timer.IsFinished())
+							timer.Reset();
 				}
 				alarm.Start(&select_beep);
 			}
@@ -475,8 +489,8 @@ void loop()
 			{
 				if ((timer.IsFinished() && !timer.IsBlinking()))
 				{
-					timer.StartBlinking(&alarm_beep, 8);
-					alarm.Start(&alarm_beep, 8);
+					timer.StartBlinking(&alarm_beep, -1);
+					alarm.Start(&alarm_beep, -1);
 				}
 				timer.Update();
 			}
