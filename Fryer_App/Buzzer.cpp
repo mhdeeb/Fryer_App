@@ -2,17 +2,17 @@
 // Path: Fryer_App/Alarm.cpp
 // Link: https://github.com/mhdeeb/Fryer_App
 
-#include "Alarm.h"
+#include "Buzzer.h"
 
 #include <Arduino.h>
 
-Alarm::Alarm(u8 pin)
+Buzzer::Buzzer(u8 pin)
 {
     this->pin = pin;
     pinMode(this->pin, OUTPUT);
 }
 
-void Alarm::Update()
+void Buzzer::Update()
 {
     if (isOn)
     {
@@ -40,9 +40,9 @@ void Alarm::Update()
     }
 }
 
-bool Alarm::IsOn() const { return isOn; }
+bool Buzzer::IsOn() const { return isOn; }
 
-void Alarm::Start(Melody *melody, u32 playCount)
+void Buzzer::Play(Melody *melody, u32 playCount)
 {
     Stop();
     this->playCount = playCount;
@@ -50,7 +50,7 @@ void Alarm::Start(Melody *melody, u32 playCount)
     isOn = true;
 }
 
-void Alarm::Stop()
+void Buzzer::Stop()
 {
     isOn = false;
     melodyIndex = 0;
@@ -60,9 +60,9 @@ void Alarm::Stop()
     digitalWrite(pin, LOW);
 }
 
-u8 Alarm::GetPin() const { return pin; }
+u8 Buzzer::GetPin() const { return pin; }
 
-Melody *Alarm::GetMelody()
+Melody *Buzzer::GetMelody()
 {
     return melody;
 }

@@ -11,7 +11,7 @@
 
 #include <LiquidCrystal_I2C.h>
 
-#include "Alarm.h"
+#include "Buzzer.h"
 
 class Timer
 {

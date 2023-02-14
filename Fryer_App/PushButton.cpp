@@ -80,14 +80,19 @@ void PushButton::Set(PushButtonInterface state, bool value)
     {
     case PushButtonInterface::PRESSED:
         isPressed = value;
+        break;
     case PushButtonInterface::RELEASED:
         isReleased = value;
+        break;
     case PushButtonInterface::HELD:
         isHeld = value;
+        break;
     case PushButtonInterface::TOGGLED:
         isToggled = value;
+        break;
     case PushButtonInterface::RESETED:
         wasReseted = value;
+        break;
     case PushButtonInterface::ALL:
     default:
         isPressed = value;
@@ -104,14 +109,19 @@ void PushButton::Reset(PushButtonInterface state)
     {
     case PushButtonInterface::PRESSED:
         isPressed = false;
+        break;
     case PushButtonInterface::RELEASED:
         isReleased = false;
+        break;
     case PushButtonInterface::HELD:
         isHeld = false;
+        break;
     case PushButtonInterface::TOGGLED:
         isToggled = false;
+        break;
     case PushButtonInterface::RESETED:
         wasReseted = true;
+        break;
     case PushButtonInterface::ALL:
     default:
         isPressed = false;

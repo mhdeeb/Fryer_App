@@ -19,7 +19,7 @@ struct Melody
     u32 length;
 };
 
-class Alarm
+class Buzzer
 {
 private:
     u8 pin;
@@ -31,10 +31,10 @@ private:
     u32 lastTime = 0;
 
 public:
-    Alarm(u8 pin);
+    Buzzer(u8 pin);
     void Update();
     bool IsOn() const;
-    void Start(Melody *melody, u32 playCount = 1);
+    void Play(Melody *melody, u32 playCount = 1);
     void Stop();
     u8 GetPin() const;
     Melody *GetMelody();
