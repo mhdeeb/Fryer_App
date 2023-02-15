@@ -29,7 +29,6 @@
 #define CURSOR_DOWN 4
 
 // Custom characters for lcd
-
 byte degree[] = {
 	B01000,
 	B10100,
@@ -131,16 +130,6 @@ PushButton editor_switch(EDITOR_SWITCH_PIN, 3000);
 
 Heater heater(HEATER_PIN, TEMP_SENSOR_PIN, DEFAULT_TEMP, MIN_TEMP, MAX_TEMP);
 
-u8 edit_column = 0;
-
-enum class InterfaceMode
-{
-	OFF_MODE = 0,
-	EDIT_MODE = 1,
-	RUN_MODE = 2,
-};
-InterfaceMode mode = InterfaceMode::OFF_MODE;
-
 Note long_note[]{
 	{128, 400},
 	{0, 400}};
@@ -171,6 +160,16 @@ Melody error_beep{
 
 Buzzer sound(ALARM_PIN);
 
+u8 edit_column = 0;
+
+enum class InterfaceMode
+{
+	OFF_MODE = 0,
+	EDIT_MODE = 1,
+	RUN_MODE = 2,
+};
+InterfaceMode mode = InterfaceMode::OFF_MODE;
+
 char string[14];
 void setup()
 {
@@ -196,7 +195,7 @@ void setup()
 	lcd.print("Temp");
 
 	lcd.setCursor(12, 1);
-	sprintf(string, "%3lu", heater.GetTemp());
+	sprintf(string, "%3d", heater.GetTemp());
 	lcd.printstr(string);
 	lcd.write(DEGREE);
 
@@ -278,7 +277,7 @@ void loop()
 				lcd.setCursor(12, 0);
 				lcd.print("Temp");
 				lcd.setCursor(12, 1);
-				sprintf(string, "%3lu", heater.GetTemp());
+				sprintf(string, "%3d", heater.GetTemp());
 				lcd.printstr(string);
 				lcd.write(DEGREE);
 				for (Timer &timer : Timers)
@@ -505,7 +504,13 @@ void loop()
 				sound.Play(&select_beep);
 			}
 
+			lcd.setCursor(12, 1);
+			sprintf(string, "%3d", heater.GetTemp());
+			lcd.printstr(string);
+
 			timer_switch.Update();
+
+			heater.Update();
 		}
 	}
 

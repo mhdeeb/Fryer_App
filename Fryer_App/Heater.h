@@ -13,7 +13,7 @@ class Heater
 private:
     u8 heaterPin;
     u8 sensorPin;
-    u8 tempC;
+    s16 tempC;
     Counter targetTempCounter;
     f64 offset;
     f64 slope;
@@ -21,7 +21,7 @@ private:
 public:
     Heater(u8 heaterPin, u8 sensorPin, u8 targetTempC, u8 minTemp, u8 maxTemp);
     void UpdateTemp();
-    f64 GetTemp() const;
+    s16 GetTemp() const;
     void SetOffset(f64 offset);
     f64 GetOffset() const;
     void SetSlope(f64 slope);

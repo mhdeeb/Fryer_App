@@ -13,9 +13,9 @@ Heater::Heater(u8 heaterPin, u8 sensorPin, u8 targetTempC, u8 minTemp, u8 maxTem
     UpdateTemp();
 }
 
-void Heater::UpdateTemp() { tempC = u8(analogRead(GetSensorPin()) * GetSlope() + GetOffset()); }
+void Heater::UpdateTemp() { tempC = s16(analogRead(GetSensorPin()) * GetSlope() + GetOffset()); }
 
-f64 Heater::GetTemp() const { return tempC; }
+s16 Heater::GetTemp() const { return tempC; }
 
 void Heater::SetOffset(f64 offset) { this->offset = offset; }
 
