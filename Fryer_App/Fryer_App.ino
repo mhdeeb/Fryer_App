@@ -4,26 +4,29 @@
 
 #include "Encoder.h"
 #include "Timer.h"
+#include "Heater.h"
 
-#define ENCODER_PIN_A 9
-#define ENCODER_PIN_B 10
-#define ENCODER_PIN_BTN 11
+#define ENCODER_PIN_A 11
+#define ENCODER_PIN_B 12
+#define ENCODER_PIN_BTN 13
 #define TIMER_SWITCH_PIN 3
 #define TEMP_SWITCH_PIN 4
 #define EDITOR_SWITCH_PIN 5
 #define ALARM_PIN 6
+#define TEMP_SENSOR_PIN A0
+#define HEATER_PIN 9
 
 #define MAX_TEMP 100
 #define MIN_TEMP 0
 #define DEFAULT_TEMP 37
 
 #define DEGREE 0
-#define OLD_LEFT_CURSOR 1
-#define LEFT_CURSOR 0x7F
-#define UP_CURSOR 2
-#define OLD_RIGHT_CURSOR 3
-#define RIGHT_CURSOR 0x7E
-#define DOWN_CURSOR 4
+#define OLD_CURSOR_LEFT 1
+#define CURSOR_LEFT 0x7F
+#define CURSOR_UP 2
+#define OLD_CURSOR_RIGHT 3
+#define CURSOR_RIGHT 0x7E
+#define CURSOR_DOWN 4
 
 // Custom characters for lcd
 
@@ -35,6 +38,16 @@ byte degree[] = {
 	B00100,
 	B00100,
 	B00100,
+	B00011};
+
+byte old_cursor_left[] = {
+	B00011,
+	B00110,
+	B01100,
+	B11000,
+	B11000,
+	B01100,
+	B00110,
 	B00011};
 
 byte cursor_left[] = {
@@ -56,6 +69,16 @@ byte cursor_up[] = {
 	B01110,
 	B01110,
 	B00000};
+
+byte old_cursor_right[] = {
+	B11000,
+	B01100,
+	B00110,
+	B00011,
+	B00011,
+	B00110,
+	B01100,
+	B11000};
 
 byte cursor_right[] = {
 	B11000,
@@ -102,11 +125,11 @@ Counter minute_selector(0, 99);
 Counter second_selector(0, 59);
 Counter editor_selector(0, sizeof(times) / sizeof(u32));
 
-Counter temp_counter(MIN_TEMP, MAX_TEMP, DEFAULT_TEMP, 1, false);
-
 PushButton timer_switch(TIMER_SWITCH_PIN, 3000);
 PushButton temp_switch(TEMP_SWITCH_PIN, 3000);
 PushButton editor_switch(EDITOR_SWITCH_PIN, 3000);
+
+Heater heater(HEATER_PIN, TEMP_SENSOR_PIN, DEFAULT_TEMP, MIN_TEMP, MAX_TEMP);
 
 u8 edit_column = 0;
 
@@ -157,21 +180,23 @@ void setup()
 
 	lcd.clear();
 	lcd.createChar(DEGREE, degree);
-	lcd.createChar(LEFT_CURSOR, cursor_left);
-	lcd.createChar(UP_CURSOR, cursor_up);
-	lcd.createChar(RIGHT_CURSOR, cursor_right);
-	lcd.createChar(DOWN_CURSOR, cursor_down);
+	lcd.createChar(CURSOR_LEFT, cursor_left);
+	lcd.createChar(OLD_CURSOR_LEFT, old_cursor_left);
+	lcd.createChar(CURSOR_UP, cursor_up);
+	lcd.createChar(CURSOR_RIGHT, cursor_right);
+	lcd.createChar(OLD_CURSOR_RIGHT, old_cursor_right);
+	lcd.createChar(CURSOR_DOWN, cursor_down);
 
 	lcd.clear();
 
 	lcd.setCursor(0, 0);
-	lcd.write(RIGHT_CURSOR);
+	lcd.write(CURSOR_RIGHT);
 
 	lcd.setCursor(12, 0);
 	lcd.print("Temp");
 
 	lcd.setCursor(12, 1);
-	sprintf(string, "%3lu", temp_counter.GetValue());
+	sprintf(string, "%3lu", heater.GetTemp());
 	lcd.printstr(string);
 	lcd.write(DEGREE);
 
@@ -190,15 +215,15 @@ void loop()
 			lcd.clear();
 			lcd.backlight();
 			lcd.setCursor(0, 0);
-			lcd.write(RIGHT_CURSOR);
+			lcd.write(CURSOR_RIGHT);
 			lcd.setCursor(11, 0);
 			lcd.print(" Edit");
 			lcd.setCursor(12, 1);
 			lcd.print("Mode");
 			lcd.setCursor(10, 0);
-			lcd.write(UP_CURSOR);
+			lcd.write(CURSOR_UP);
 			lcd.setCursor(10, 1);
-			lcd.write(DOWN_CURSOR);
+			lcd.write(CURSOR_DOWN);
 			sprintf(string, "T%d %02lu:%02lu", 1, times[0] / 60, times[0] % 60);
 			lcd.setCursor(1, 0);
 			lcd.printstr(string);
@@ -224,7 +249,7 @@ void loop()
 			sound.Play(&select_beep);
 
 			lcd.setCursor(0, 0);
-			lcd.write(RIGHT_CURSOR);
+			lcd.write(CURSOR_RIGHT);
 			lcd.backlight();
 		}
 	}
@@ -253,7 +278,7 @@ void loop()
 				lcd.setCursor(12, 0);
 				lcd.print("Temp");
 				lcd.setCursor(12, 1);
-				sprintf(string, "%3lu", temp_counter.GetValue());
+				sprintf(string, "%3lu", heater.GetTemp());
 				lcd.printstr(string);
 				lcd.write(DEGREE);
 				for (Timer &timer : Timers)
@@ -300,7 +325,7 @@ void loop()
 				else if (edit_column == 1)
 				{
 					if (editor_selector.GetValue() == 6)
-						encoder.SetCounter(&temp_counter);
+						encoder.SetCounter(&heater.GetTargetTempCounter());
 					else
 						encoder.SetCounter(&minute_selector);
 				}
@@ -316,7 +341,7 @@ void loop()
 
 				if (editor_selector.GetValue() == 6)
 				{
-					sprintf(string, "Temp %3lu", temp_counter.GetValue());
+					sprintf(string, "Temp %3lu", heater.GetTargetTempCounter().GetValue());
 					lcd.printstr(string);
 					lcd.write(DEGREE);
 					lcd.setCursor(1, 1);
@@ -336,7 +361,7 @@ void loop()
 					lcd.printstr(string);
 					if (editor_selector.GetValue() == 5)
 					{
-						sprintf(string, "Temp %3lu", temp_counter.GetValue());
+						sprintf(string, "Temp %3lu", heater.GetTargetTempCounter().GetValue());
 						lcd.setCursor(1, 1);
 						lcd.printstr(string);
 						lcd.write(DEGREE);
@@ -396,7 +421,7 @@ void loop()
 				lcd.setCursor(9, timer_selector.GetValue());
 				lcd.print(' ');
 				lcd.setCursor(0, timer_selector.GetValue());
-				lcd.write(RIGHT_CURSOR);
+				lcd.write(CURSOR_RIGHT);
 
 				bool isAnyFinished = false;
 				for (Timer &timer : Timers)
@@ -431,9 +456,9 @@ void loop()
 					if (encoder.GetButton().Get(PushButtonInterface::TOGGLED))
 					{
 						lcd.setCursor(0, timer_selector.GetValue());
-						lcd.write(OLD_LEFT_CURSOR);
+						lcd.write(OLD_CURSOR_LEFT);
 						lcd.setCursor(9, timer_selector.GetValue());
-						lcd.write(OLD_RIGHT_CURSOR);
+						lcd.write(OLD_CURSOR_RIGHT);
 						if (timer_selector.GetValue())
 							encoder.SetCounter(&time2_selector);
 						else
@@ -446,7 +471,7 @@ void loop()
 						lcd.setCursor(9, timer_selector.GetValue());
 						lcd.print(' ');
 						lcd.setCursor(0, timer_selector.GetValue());
-						lcd.write(RIGHT_CURSOR);
+						lcd.write(CURSOR_RIGHT);
 						encoder.SetCounter(&timer_selector);
 					}
 					sound.Play(&select_beep);
@@ -463,7 +488,7 @@ void loop()
 				lcd.setCursor(0, 1 - timer_selector.GetValue());
 				lcd.print(' ');
 				lcd.setCursor(0, timer_selector.GetValue());
-				lcd.write(RIGHT_CURSOR);
+				lcd.write(CURSOR_RIGHT);
 
 				if (encoder.GetButton().Get(PushButtonInterface::TOGGLED))
 				{

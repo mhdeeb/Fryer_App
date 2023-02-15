@@ -5,30 +5,34 @@
 #ifndef HEATER_INTERFACE_H
 #define HEATER_INTERFACE_H
 
-#define TEMP_SENSOR A0
-#define HEATER 4
-#define ALARM 6
+#include "def.h"
+#include "Counter.h"
 
-// Heater parameters
-const int PT1000_PIN = A0;
-const float vt_factor = 1.01;
-const float offset = -25.6;
-
-float temp_c;
-int sensor_value;
-float voltage;
-
-void HEATER_CONTROL(void)
+class Heater
 {
+private:
+    u8 heaterPin;
+    u8 sensorPin;
+    u8 tempC;
+    Counter targetTempCounter;
+    f64 offset;
+    f64 slope;
 
-    pinMode(TEMP_SENSOR, INPUT);
-    pinMode(HEATER, OUTPUT);
-    pinMode(ALARM, OUTPUT);
-    pinMode(6, OUTPUT);
-    sensor_value = analogRead(PT1000_PIN);
-    voltage = sensor_value * (5.0 / 1023.0);
-    temp_c = (((voltage * 100) / vt_factor) + offset);
-    delay(500);
-}
+public:
+    Heater(u8 heaterPin, u8 sensorPin, u8 targetTempC, u8 minTemp, u8 maxTemp);
+    void UpdateTemp();
+    f64 GetTemp() const;
+    void SetOffset(f64 offset);
+    f64 GetOffset() const;
+    void SetSlope(f64 slope);
+    f64 GetSlope() const;
+    void SetHeaterPin(u8 heaterPin);
+    u8 GetHeaterPin() const;
+    void SetSensorPin(u8 sensorPin);
+    u8 GetSensorPin() const;
+    Counter &GetTargetTempCounter();
+    void Calibrate();
+    void Update();
+};
 
 #endif // HEATER_INTERFACE_H
