@@ -484,17 +484,23 @@ void loop()
 
 			if (change)
 			{
-				lcd.setCursor(0, 1 - timer_selector.GetValue());
-				lcd.print(' ');
-				lcd.setCursor(0, timer_selector.GetValue());
-				lcd.write(CURSOR_RIGHT);
-
 				if (encoder.GetButton().Get(PushButtonInterface::TOGGLED))
 				{
+					lcd.setCursor(0, timer_selector.GetValue());
+					lcd.write(OLD_CURSOR_LEFT);
+					lcd.setCursor(9, timer_selector.GetValue());
+					lcd.write(OLD_CURSOR_RIGHT);
 					if (timer_selector.GetValue())
 						Timers[1].Set(times[time2_selector.GetValue()]);
 					else
 						Timers[0].Set(times[time1_selector.GetValue()]);
+				}
+				else
+				{
+					lcd.setCursor(0, 1 - timer_selector.GetValue());
+					lcd.print(' ');
+					lcd.setCursor(0, timer_selector.GetValue());
+					lcd.write(CURSOR_RIGHT);
 				}
 
 				for (Timer &timer : Timers)

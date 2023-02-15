@@ -4,6 +4,8 @@
 
 #include "Heater.h"
 
+#include "Arduino.h"
+
 Heater::Heater(u8 heaterPin, u8 sensorPin, u8 targetTempC, u8 minTemp, u8 maxTemp) : targetTempCounter(minTemp, maxTemp, targetTempC, 1, false), sensor(sensorPin) { SetHeaterPin(heaterPin); }
 
 s16 Heater::GetTemp() const { return sensor.GetTemp(); }
