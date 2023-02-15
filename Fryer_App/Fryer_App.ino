@@ -105,11 +105,18 @@ Counter editor_selector(0, sizeof(times) / sizeof(u32));
 Counter temp_counter(MIN_TEMP, MAX_TEMP, DEFAULT_TEMP, 1, false);
 
 PushButton timer_switch(TIMER_SWITCH_PIN, 3000);
-PushButton temp_switch(TEMP_SWITCH_PIN, 5000);
+PushButton temp_switch(TEMP_SWITCH_PIN, 3000);
 PushButton editor_switch(EDITOR_SWITCH_PIN, 3000);
 
 u8 edit_column = 0;
-bool editorMode = false;
+
+enum class InterfaceMode
+{
+	OFF_MODE = 0,
+	EDIT_MODE = 1,
+	RUN_MODE = 2,
+};
+InterfaceMode mode = InterfaceMode::OFF_MODE;
 
 Note long_note[]{
 	{128, 400},
@@ -174,21 +181,11 @@ void setup()
 
 void loop()
 {
-	if (!editorMode)
+	if (mode == InterfaceMode::OFF_MODE)
 	{
-		bool isAnyTimerRunning = false;
-		for (Timer &timer : Timers)
+		if (editor_switch.Get(PushButtonInterface::HELD))
 		{
-			if (timer.IsRunning())
-			{
-				isAnyTimerRunning = true;
-				break;
-			}
-		}
-
-		if (editor_switch.Get(PushButtonInterface::HELD) && !temp_switch.Get(PushButtonInterface::TOGGLED))
-		{
-			editorMode = true;
+			mode = InterfaceMode::EDIT_MODE;
 			sound.Play(&select_beep);
 			lcd.clear();
 			lcd.backlight();
@@ -216,65 +213,56 @@ void loop()
 		}
 		else if (temp_switch.Get(PushButtonInterface::PRESSED))
 		{
-			if (temp_switch.Get(PushButtonInterface::TOGGLED))
-			{
-				timer_switch.Reset();
-				encoder.SetCounter(&timer_selector);
-				encoder.Reset();
+			mode = InterfaceMode::RUN_MODE;
+			timer_switch.Reset();
+			encoder.SetCounter(&timer_selector);
+			encoder.Reset();
 
-				for (Timer &timer : Timers)
-					timer.Reset();
+			for (Timer &timer : Timers)
+				timer.Reset();
 
-				sound.Play(&select_beep);
+			sound.Play(&select_beep);
 
-				lcd.setCursor(0, 0);
-				lcd.write(RIGHT_CURSOR);
-				lcd.backlight();
-			}
-			else
-				lcd.noBacklight();
-		}
-		// if (temp_switch.Get(PushButtonInterface::HELD)) // FIXME: Add restriction to hold only when timer is running
-		// {
-
-		// }
-		// else if (isAnyTimerRunning)
-		// 	temp_switch.Set(PushButtonInterface::TOGGLED);
-	}
-	else if (editor_switch.Get(PushButtonInterface::PRESSED))
-	{
-		editorMode = false;
-		lcd.setCursor(0, 0);
-		lcd.print("                ");
-		lcd.setCursor(0, 1);
-		lcd.print("                ");
-		lcd.setCursor(5, 1);
-		lcd.print("Saved");
-		delay(1000);
-		sound.Play(&start_beep);
-		lcd.noBacklight();
-		lcd.setCursor(9, 0);
-		lcd.print(' ');
-		lcd.setCursor(9, 1);
-		lcd.print(' ');
-		lcd.setCursor(12, 0);
-		lcd.print("Temp");
-		lcd.setCursor(12, 1);
-		sprintf(string, "%3lu", temp_counter.GetValue());
-		lcd.printstr(string);
-		lcd.write(DEGREE);
-		for (Timer &timer : Timers)
-		{
-			timer.Set(times[0]);
-			timer.Update();
+			lcd.setCursor(0, 0);
+			lcd.write(RIGHT_CURSOR);
+			lcd.backlight();
 		}
 	}
-
-	if (editorMode || temp_switch.Get(PushButtonInterface::TOGGLED))
+	else
 	{
 		s8 change = encoder.popRotationChange();
-		if (editorMode)
+
+		if (mode == InterfaceMode::EDIT_MODE)
 		{
+			if (editor_switch.Get(PushButtonInterface::PRESSED))
+			{
+				mode = InterfaceMode::OFF_MODE;
+				lcd.setCursor(0, 0);
+				lcd.print("                ");
+				lcd.setCursor(0, 1);
+				lcd.print("                ");
+				lcd.setCursor(5, 1);
+				lcd.print("Saved");
+				delay(1000);
+				sound.Play(&start_beep);
+				lcd.noBacklight();
+				lcd.setCursor(9, 0);
+				lcd.print(' ');
+				lcd.setCursor(9, 1);
+				lcd.print(' ');
+				lcd.setCursor(12, 0);
+				lcd.print("Temp");
+				lcd.setCursor(12, 1);
+				sprintf(string, "%3lu", temp_counter.GetValue());
+				lcd.printstr(string);
+				lcd.write(DEGREE);
+				for (Timer &timer : Timers)
+				{
+					timer.Set(times[0]);
+					timer.Update();
+				}
+			}
+
 			if (encoder.GetButton().Get(PushButtonInterface::PRESSED))
 			{
 				edit_column++;
@@ -372,9 +360,36 @@ void loop()
 				sound.Play(&select_beep);
 			}
 		}
-		else
+		else if (mode == InterfaceMode::RUN_MODE)
 		{
-			if (timer_switch.Get(PushButtonInterface::PRESSED))
+			bool isAnyTimerRunning = false;
+			for (Timer &timer : Timers)
+			{
+				if ((timer.IsFinished() && !timer.IsBlinking()))
+				{
+					timer.StartBlinking(&alarm_beep, -1);
+					sound.Play(&alarm_beep, -1);
+				}
+				else if (timer.IsRunning())
+					isAnyTimerRunning = true;
+				timer.Update();
+			}
+
+			if (temp_switch.Get(PushButtonInterface::PRESSED) && !isAnyTimerRunning)
+			{
+				mode = InterfaceMode::OFF_MODE;
+				lcd.noBacklight();
+			}
+			else if (temp_switch.Get(PushButtonInterface::RELEASED) && isAnyTimerRunning)
+			{
+				sound.Play(&error_beep, 2);
+			}
+			else if (temp_switch.Get(PushButtonInterface::HELD) && isAnyTimerRunning)
+			{
+				mode = InterfaceMode::OFF_MODE;
+				lcd.noBacklight();
+			}
+			else if (timer_switch.Get(PushButtonInterface::PRESSED))
 			{
 				lcd.setCursor(0, timer_selector.GetValue());
 				lcd.print(' ');
@@ -405,11 +420,11 @@ void loop()
 				timer_switch.Set(PushButtonInterface::RESETED);
 				sound.Play(&start_beep);
 			}
-
-			if (timer_switch.Get(PushButtonInterface::RELEASED) && Timers[timer_selector.GetValue()].IsRunning())
+			else if (timer_switch.Get(PushButtonInterface::RELEASED) && Timers[timer_selector.GetValue()].IsRunning())
+			{
 				sound.Play(&error_beep, 2);
-
-			if (encoder.GetButton().Get(PushButtonInterface::PRESSED))
+			}
+			else if (encoder.GetButton().Get(PushButtonInterface::PRESSED))
 			{
 				if (!Timers[timer_selector.GetValue()].IsRunning())
 				{
@@ -463,16 +478,6 @@ void loop()
 						timer.Reset();
 
 				sound.Play(&select_beep);
-			}
-
-			for (Timer &timer : Timers)
-			{
-				if ((timer.IsFinished() && !timer.IsBlinking()))
-				{
-					timer.StartBlinking(&alarm_beep, -1);
-					sound.Play(&alarm_beep, -1);
-				}
-				timer.Update();
 			}
 
 			timer_switch.Update();
