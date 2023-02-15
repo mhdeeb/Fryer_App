@@ -23,7 +23,7 @@ public:
     u8 GetHeaterPin() const;
     Counter &GetTargetTempCounter();
     TempSensor &GetSensor();
-    void Control();
+    void Control(); // To be implemented
     void Update();
 };
 

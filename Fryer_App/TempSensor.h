@@ -25,7 +25,7 @@ public:
     u8 GetPin() const;
     void Update();
     s16 GetTemp() const;
-    void Calibrate();
+    void Calibrate(); // To be implemented
 };
 
 #endif // TEMP_SENSOR_H

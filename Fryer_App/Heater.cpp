@@ -22,6 +22,10 @@ TempSensor &Heater::GetSensor() { return sensor; }
 
 void Heater::Control()
 {
+    if (GetTemp() < GetTargetTempCounter().GetValue() - 2)
+        digitalWrite(GetHeaterPin(), HIGH);
+    else
+        digitalWrite(GetHeaterPin(), LOW);
 }
 
 void Heater::Update()
