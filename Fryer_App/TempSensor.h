@@ -14,6 +14,8 @@ private:
     f64 offset;
     f64 slope;
     s16 tempC;
+    u32 lastUpdate;
+    u32 updateInterval = 500;
 
 public:
     TempSensor(u8 pin);

@@ -6,7 +6,11 @@
 
 #include "Arduino.h"
 
-TempSensor::TempSensor(u8 pin) : pin(pin) { Calibrate(); }
+TempSensor::TempSensor(u8 pin) : pin(pin)
+{
+    Calibrate();
+    lastUpdate = millis();
+}
 
 void TempSensor::SetOffset(f64 offset) { this->offset = offset; }
 
@@ -24,7 +28,13 @@ void TempSensor::SetPin(u8 pin)
 
 u8 TempSensor::GetPin() const { return pin; }
 
-void TempSensor::Update() { tempC = s16(analogRead(GetPin()) * GetSlope() + GetOffset()); }
+void TempSensor::Update()
+{
+    if (millis() - lastUpdate < updateInterval)
+        return;
+    tempC = s16(analogRead(GetPin()) * GetSlope() + GetOffset());
+    lastUpdate = millis();
+}
 
 s16 TempSensor::GetTemp() const { return tempC; }
 

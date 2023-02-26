@@ -1,7 +1,7 @@
 {
     "board": "arduino:avr:uno",
     "port": "COM3",
-    "programmer": "arduino:avrispmkii",
+    "programmer": "avrispmkii",
     "sketch": "Fryer_App\\Fryer_App.ino",
     "output": "Output"
 }
