@@ -13,6 +13,7 @@
 #define TEMP_SWITCH_PIN 4
 #define EDITOR_SWITCH_PIN 5
 #define ALARM_PIN 6
+#define BUZZER_PIN 7
 #define TEMP_SENSOR_PIN A0
 #define HEATER_PIN 9
 
@@ -131,7 +132,7 @@ PushButton editor_switch(EDITOR_SWITCH_PIN, 3000);
 Heater heater(HEATER_PIN, TEMP_SENSOR_PIN, DEFAULT_TEMP, MIN_TEMP, MAX_TEMP);
 
 Note long_note[]{
-	{128, 400},
+	{255, 400},
 	{0, 400}};
 
 Note short_note[]{
@@ -158,7 +159,8 @@ Melody error_beep{
 	error_note,
 	sizeof(error_note) / sizeof(Note)};
 
-Buzzer sound(ALARM_PIN);
+Buzzer sound(BUZZER_PIN);
+Buzzer alarm(ALARM_PIN);
 
 u8 edit_column = 0;
 
@@ -392,7 +394,7 @@ void loop()
 				if ((timer.IsFinished() && !timer.IsBlinking()))
 				{
 					timer.StartBlinking(&alarm_beep, -1);
-					sound.Play(&alarm_beep, -1);
+					alarm.Play(&alarm_beep, -1);
 				}
 				else if (timer.IsRunning())
 					isAnyTimerRunning = true;
@@ -474,6 +476,7 @@ void loop()
 						encoder.SetCounter(&timer_selector);
 					}
 					sound.Play(&select_beep);
+					alarm.Stop();
 				}
 				else
 				{
@@ -508,6 +511,7 @@ void loop()
 						timer.Reset();
 
 				sound.Play(&select_beep);
+				alarm.Stop();
 			}
 
 			lcd.setCursor(12, 1);
