@@ -5,10 +5,11 @@
 #include "Encoder.h"
 #include "Timer.h"
 #include "Heater.h"
+#include <EEPROM.h>
 
-#define ENCODER_PIN_A 11
-#define ENCODER_PIN_B 12
-#define ENCODER_PIN_BTN 13
+#define ENCODER_PIN_A 13
+#define ENCODER_PIN_B 11
+#define ENCODER_PIN_BTN 12
 #define TIMER_SWITCH_PIN 3
 #define TEMP_SWITCH_PIN 4
 #define EDITOR_SWITCH_PIN 5
@@ -101,13 +102,7 @@ byte cursor_down[] = {
 	B00000};
 
 // Standard Timers
-u32 times[] = {
-	30,
-	60,
-	300,
-	900,
-	1800,
-	3600};
+u32 times[6]{};
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
@@ -129,7 +124,7 @@ PushButton timer_switch(TIMER_SWITCH_PIN, 3000);
 PushButton temp_switch(TEMP_SWITCH_PIN, 3000);
 PushButton editor_switch(EDITOR_SWITCH_PIN, 3000);
 
-Heater heater(HEATER_PIN, TEMP_SENSOR_PIN, DEFAULT_TEMP, MIN_TEMP, MAX_TEMP);
+Heater heater(HEATER_PIN, TEMP_SENSOR_PIN, 37, MIN_TEMP, MAX_TEMP);
 
 Note long_note[]{
 	{255, 400},
@@ -172,6 +167,19 @@ enum class InterfaceMode
 };
 InterfaceMode mode = InterfaceMode::OFF_MODE;
 
+void saveTimer(u8 index)
+{
+	for (u8 i = 0; i < 4; i++)
+		EEPROM.write(index * 4 + i + 1, (times[index] >> (24 - 8 * i)) & 0xFF);
+}
+
+void loadTimer(u8 index)
+{
+	times[index] = 0;
+	for (u8 i = 0; i < 4; i++)
+		times[index] = (times[index] << 8) | EEPROM.read(index * 4 + i + 1);
+}
+
 char string[14];
 void setup()
 {
@@ -201,8 +209,29 @@ void setup()
 	lcd.printstr(string);
 	lcd.write(DEGREE);
 
+	if (EEPROM.read(0) == 0x55)
+	{
+		for (u8 i = 0; i < sizeof(times) / sizeof(u32); i++)
+			loadTimer(i);
+	}
+	else
+	{
+		EEPROM.write(0, 0x55);
+		times[0] = 30;
+		times[1] = 60;
+		times[2] = 300;
+		times[3] = 900;
+		times[4] = 1800;
+		times[5] = 3600;
+		for (u8 i = 0; i < sizeof(times) / sizeof(u32); i++)
+			saveTimer(i);
+	}
+
 	for (Timer &timer : Timers)
+	{
+		timer.Set(times[0]);
 		timer.SetLCD(&lcd);
+	}
 }
 
 void loop()
@@ -351,7 +380,10 @@ void loop()
 				else
 				{
 					if (edit_column)
+					{
 						times[editor_selector.GetValue()] = minute_selector.GetValue() * 60 + second_selector.GetValue();
+						saveTimer(editor_selector.GetValue());
+					}
 
 					lcd.setCursor(9, 0);
 					lcd.print(' ');
