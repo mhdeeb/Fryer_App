@@ -15,8 +15,8 @@
 #define EDITOR_SWITCH_PIN 5
 #define ALARM_PIN 6
 #define BUZZER_PIN 7
-#define TEMP_SENSOR_PIN A0
-#define HEATER_PIN 9
+// #define TEMP_SENSOR_PIN A0
+// #define HEATER_PIN 9
 
 #define MAX_TEMP 100
 #define MIN_TEMP 0
@@ -118,13 +118,13 @@ Counter time1_selector(0, sizeof(times) / sizeof(u32) - 1);
 Counter time2_selector(0, sizeof(times) / sizeof(u32) - 1);
 Counter minute_selector(0, 99);
 Counter second_selector(0, 59);
-Counter editor_selector(0, sizeof(times) / sizeof(u32));
+Counter editor_selector(0, sizeof(times) / sizeof(u32) - 1);
 
 PushButton timer_switch(TIMER_SWITCH_PIN, 3000);
 PushButton temp_switch(TEMP_SWITCH_PIN, 3000);
 PushButton editor_switch(EDITOR_SWITCH_PIN, 3000);
 
-Heater heater(HEATER_PIN, TEMP_SENSOR_PIN, 37, MIN_TEMP, MAX_TEMP);
+// Heater heater(HEATER_PIN, TEMP_SENSOR_PIN, 37, MIN_TEMP, MAX_TEMP);
 
 Note long_note[]{
 	{255, 400},
@@ -201,13 +201,13 @@ void setup()
 	lcd.setCursor(0, 0);
 	lcd.write(CURSOR_RIGHT);
 
-	lcd.setCursor(12, 0);
-	lcd.print("Temp");
+	// lcd.setCursor(12, 0);
+	// lcd.print("Temp");
 
-	lcd.setCursor(12, 1);
-	sprintf(string, "%3d", heater.GetTemp());
-	lcd.printstr(string);
-	lcd.write(DEGREE);
+	// lcd.setCursor(12, 1);
+	// sprintf(string, "%3d", heater.GetTemp());
+	// lcd.printstr(string);
+	// lcd.write(DEGREE);
 
 	if (EEPROM.read(0) == 0x55)
 	{
@@ -305,12 +305,12 @@ void loop()
 				lcd.print(' ');
 				lcd.setCursor(9, 1);
 				lcd.print(' ');
-				lcd.setCursor(12, 0);
-				lcd.print("Temp");
-				lcd.setCursor(12, 1);
-				sprintf(string, "%3d", heater.GetTemp());
-				lcd.printstr(string);
-				lcd.write(DEGREE);
+				// lcd.setCursor(12, 0);
+				// lcd.print("Temp");
+				// lcd.setCursor(12, 1);
+				// sprintf(string, "%3d", heater.GetTemp());
+				// lcd.printstr(string);
+				// lcd.write(DEGREE);
 				for (Timer &timer : Timers)
 				{
 					timer.Set(times[0]);
@@ -322,20 +322,20 @@ void loop()
 			{
 				edit_column++;
 
-				if (editor_selector.GetValue() == 6)
-				{
-					edit_column %= 2;
+				// if (editor_selector.GetValue() == 6)
+				// {
+				// 	edit_column %= 2;
 
-					if (edit_column)
-					{
-						lcd.cursor();
-						lcd.setCursor(8, 0);
-					}
-					else
-						lcd.noCursor();
-				}
-				else
-				{
+				// 	if (edit_column)
+				// 	{
+				// 		lcd.cursor();
+				// 		lcd.setCursor(8, 0);
+				// 	}
+				// 	else
+				// 		lcd.noCursor();
+				// }
+				// else
+				// {
 					edit_column %= 3;
 
 					if (edit_column)
@@ -345,7 +345,7 @@ void loop()
 					}
 					else
 						lcd.noCursor();
-				}
+				// }
 
 				minute_selector.SetValue(times[editor_selector.GetValue()] / 60);
 				second_selector.SetValue(times[editor_selector.GetValue()] % 60);
@@ -354,9 +354,9 @@ void loop()
 					encoder.SetCounter(&editor_selector);
 				else if (edit_column == 1)
 				{
-					if (editor_selector.GetValue() == 6)
-						encoder.SetCounter(&heater.GetTargetTempCounter());
-					else
+					// if (editor_selector.GetValue() == 6)
+					// 	encoder.SetCounter(&heater.GetTargetTempCounter());
+					// else
 						encoder.SetCounter(&minute_selector);
 				}
 				else if (edit_column == 2)
@@ -369,11 +369,11 @@ void loop()
 			{
 				lcd.setCursor(1, 0);
 
-				if (editor_selector.GetValue() == 6)
+				if (editor_selector.GetValue() == 5)
 				{
-					sprintf(string, "Temp %3lu", heater.GetTargetTempCounter().GetValue());
+					sprintf(string, "T%lu %02lu:%02lu", editor_selector.GetValue() + 1, times[editor_selector.GetValue()] / 60, times[editor_selector.GetValue()] % 60);
+					lcd.setCursor(1, 0);
 					lcd.printstr(string);
-					lcd.write(DEGREE);
 					lcd.setCursor(1, 1);
 					lcd.print("         ");
 				}
@@ -392,26 +392,26 @@ void loop()
 					sprintf(string, "T%lu %02lu:%02lu", editor_selector.GetValue() + 1, times[editor_selector.GetValue()] / 60, times[editor_selector.GetValue()] % 60);
 					lcd.setCursor(1, 0);
 					lcd.printstr(string);
-					if (editor_selector.GetValue() == 5)
-					{
-						sprintf(string, "Temp %3lu", heater.GetTargetTempCounter().GetValue());
-						lcd.setCursor(1, 1);
-						lcd.printstr(string);
-						lcd.write(DEGREE);
-					}
-					else
-					{
+					// if (editor_selector.GetValue() == 5)
+					// {
+						// sprintf(string, "Temp %3lu", heater.GetTargetTempCounter().GetValue());
+						// lcd.setCursor(1, 1);
+						// lcd.printstr(string);
+						// lcd.write(DEGREE);
+					// }
+					// else
+					// {
 						sprintf(string, "T%lu %02lu:%02lu", editor_selector.GetValue() + 2, times[editor_selector.GetValue() + 1] / 60, times[editor_selector.GetValue() + 1] % 60);
 						lcd.setCursor(1, 1);
 						lcd.printstr(string);
-					}
+					// }
 				}
 
 				if (edit_column)
 				{
-					if (editor_selector.GetValue() == 6)
-						lcd.setCursor(8, 0);
-					else
+					// if (editor_selector.GetValue() == 6)
+					// 	lcd.setCursor(8, 0);
+					// else
 						lcd.setCursor(3 * edit_column + 2, 0);
 				}
 
@@ -546,13 +546,13 @@ void loop()
 				alarm.Stop();
 			}
 
-			lcd.setCursor(12, 1);
-			sprintf(string, "%3d", heater.GetTemp());
-			lcd.printstr(string);
+			// lcd.setCursor(12, 1);
+			// sprintf(string, "%3d", heater.GetTemp());
+			// lcd.printstr(string);
 
 			timer_switch.Update();
 
-			heater.Update();
+			// heater.Update();
 		}
 	}
 
