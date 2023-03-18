@@ -6,17 +6,15 @@
 
 #include <Arduino.h>
 
-Timer::Timer(u32 initialValue, u32 col, u32 row, const char *name, LiquidCrystal_I2C *lcd) : counter(0, initialValue, initialValue, 1, false), col(col), row(row), name(name), lcd(lcd), lastUpdateTime(millis())
+Timer::Timer(u32 initialValue) : counter(0, initialValue, initialValue, 1, false), lastUpdateTime(millis())
 {
     counter.SetValue(initialValue);
-    Draw();
 }
 
 void Timer::Set(u32 value)
 {
     counter.SetMax(value);
     counter.SetValue(value);
-    Draw();
 }
 
 void Timer::Start()
@@ -28,57 +26,16 @@ void Timer::Start()
 void Timer::Stop()
 {
     isRunning = false;
-    isFinished = false;
 }
 
 void Timer::Reset()
 {
     counter.SetValue(counter.GetMax());
-    StopBlinking();
-    Draw();
     isRunning = false;
     isFinished = false;
 }
 
 void Timer::SetUpdateDelay(u32 updateDelay) { this->updateDelay = updateDelay; }
-
-void Timer::Draw()
-{
-    if (lcd)
-    {
-        char string[14];
-        lcd->setCursor(col, row);
-        sprintf(string, "%s %02lu:%02lu", name, GetTime() / 60, GetTime() % 60);
-
-        if (IsBlinking())
-        {
-            if (melodyIndex == 0 || ((melodyIndex < melody->length) && ((millis() - lastBlinkTime) >= melody->melody[melodyIndex - 1].duration)))
-            {
-                if (!melody->melody[melodyIndex].note)
-                {
-                    lcd->printstr("        ");
-                    lastBlinkTime = millis();
-                }
-                else
-                    lcd->printstr(string);
-                melodyIndex++;
-                lastBlinkTime = millis();
-            }
-            else if (melodyIndex >= melody->length && ((millis() - lastBlinkTime) >= melody->melody[melodyIndex - 1].duration))
-            {
-                if (playIndex < playCount - 1)
-                {
-                    playIndex++;
-                    melodyIndex = 0;
-                }
-                else
-                    Reset();
-            }
-        }
-        else
-            lcd->printstr(string);
-    }
-}
 
 void Timer::Update()
 {
@@ -91,39 +48,50 @@ void Timer::Update()
             isFinished = true;
         }
 
-        Draw();
-
         lastUpdateTime = millis();
     }
-}
-
-void Timer::SetLCD(LiquidCrystal_I2C *lcd)
-{
-    this->lcd = lcd;
-    Draw();
 }
 
 bool Timer::IsRunning() const { return isRunning; }
 
 bool Timer::IsFinished() const { return isFinished; }
 
+// u32 Timer::GetMilliseconds() const { return counter.GetValue(); }
+
+// u32 Timer::GetHours() const { return counter.GetValue() / 3600; }
+
+// u32 Timer::GetMinutes() const { return (counter.GetValue() % 3600) / 60; }
+
+// u32 Timer::GetSeconds() const { return counter.GetValue() % 60; }
+
+// void Timer::SetTime(u32 hours, u32 minutes, u32 seconds, u32 milliseconds) { counter.SetValue(hours * 360000 + minutes * 60000 + seconds * 1000 + milliseconds); }
+
+// void Timer::SetMinutes(u32 minutes) { SetTime(GetHours(), minutes, GetSeconds(), GetMilliseconds()); }
+
+// void Timer::SetSeconds(u32 seconds) { SetTime(GetHours(), GetMinutes(), seconds, GetMilliseconds()); }
+
+// void Timer::SetHours(u32 hours) { SetTime(hours, GetMinutes(), GetSeconds(), GetMilliseconds()); }
+
+// void Timer::SetMilliseconds(u32 milliseconds) { SetTime(GetHours(), GetMinutes(), GetSeconds(), milliseconds); }
+
+// void Timer::IncrementMinutes(u32 minutes) { counter.Increment(minutes * 60); }
+
+// void Timer::IncrementSeconds(u32 seconds) { counter.Increment(seconds); }
+
+void Timer::IncrementMinutes(u32 minutes) { counter.SetValue(counter.GetValue() + minutes * 60000); }
+
+void Timer::IncrementSeconds(u32 seconds) { counter.SetValue(counter.GetValue() + seconds * 1000); }
+
+void Timer::DecrementMinutes(u32 minutes) { counter.SetValue(counter.GetValue() - minutes * 60000); }
+
+void Timer::DecrementSeconds(u32 seconds) { counter.SetValue(counter.GetValue() - seconds * 1000); }
+
+u32 Timer::GetValue() const { return counter.GetValue(); }
+
+u32 Timer::GetMinutes() const { return counter.GetValue() / 60000; }
+
+u32 Timer::GetSeconds() const { return (counter.GetValue() % 60000) / 1000; }
+
 u32 Timer::GetTime() const { return counter.GetValue(); }
 
-void Timer::StartBlinking(Melody *melody, u32 playCount = 1)
-{
-    this->playCount = playCount;
-    this->playIndex = 0;
-    this->melody = melody;
-}
-
-void Timer::StopBlinking()
-{
-    this->playCount = 0;
-    this->playIndex = 0;
-    melody = nullptr;
-}
-
-bool Timer::IsBlinking() const
-{
-    return playCount;
-}
+u32 Timer::GetMax() const { return counter.GetMax(); }

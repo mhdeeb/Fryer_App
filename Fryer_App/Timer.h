@@ -9,30 +9,19 @@
 
 #include "Counter.h"
 
-#include <LiquidCrystal_I2C.h>
-
 #include "Buzzer.h"
 
 class Timer
 {
 private:
     Counter counter;
-    u32 col;
-    u32 row;
-    const char *name;
     u32 lastUpdateTime;
-    LiquidCrystal_I2C *lcd;
     u32 updateDelay = 1000;
     bool isRunning = false;
     bool isFinished = false;
-    Melody *melody = nullptr;
-    u32 melodyIndex = 0;
-    u32 lastBlinkTime = 0;
-    u32 playIndex = 0;
-    u32 playCount = 0;
 
 public:
-    Timer(u32 initialValue, u32 col, u32 row, const char *name, LiquidCrystal_I2C *lcd = nullptr);
+    Timer(u32 initialValue);
 
     void Set(u32 value);
 
@@ -44,23 +33,63 @@ public:
 
     void SetUpdateDelay(u32 updateDelay);
 
-    void Draw();
-
     void Update();
-
-    void SetLCD(LiquidCrystal_I2C *lcd);
 
     bool IsRunning() const;
 
     bool IsFinished() const;
 
+    // u32 GetMilliseconds() const;
+
+    // u32 GetHours() const;
+
+    // u32 GetMinutes() const;
+
+    // u32 GetSeconds() const;
+
+    // void SetTime(u32 hours, u32 minutes, u32 seconds, u32 milliseconds);
+
+    // void SetMinutes(u32 minutes);
+
+    // void SetSeconds(u32 seconds);
+
+    // void SetHours(u32 hours);
+
+    // void SetMilliseconds(u32 milliseconds);
+
+    // void IncrementMinutes(u32 minutes);
+
+    // void IncrementSeconds(u32 seconds);
+
+    // void IncrementHours(u32 hours);
+
+    // void IncrementMilliseconds(u32 milliseconds);
+
+    // void DecrementMinutes(u32 minutes);
+
+    // void DecrementSeconds(u32 seconds);
+
+    // void DecrementHours(u32 hours);
+
+    // void DecrementMilliseconds(u32 milliseconds);
+
+    void IncrementMinutes(u32 minutes);
+
+    void IncrementSeconds(u32 seconds);
+
+    void DecrementMinutes(u32 minutes);
+
+    void DecrementSeconds(u32 seconds);
+
+    u32 GetValue() const;
+
+    u32 GetMinutes() const;
+
+    u32 GetSeconds() const;
+
     u32 GetTime() const;
 
-    void StartBlinking(Melody *melody, u32 playCount);
-
-    void StopBlinking();
-
-    bool IsBlinking() const;
+    u32 GetMax() const;
 };
 
 #endif // TIMER_H
