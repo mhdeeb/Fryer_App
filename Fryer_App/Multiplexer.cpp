@@ -39,7 +39,7 @@ void Multiplexer::Update()
             digitalWrite(pins[j], LOW);
     else if (values[currIndex])
         for (u8 j = 0; j < pinCount; j++)
-            digitalWrite(pins[j], ((currIndex + 1) >> j) & 1);
+            digitalWrite(pins[j], (1 - ((currIndex + 1) >> j) & 1));
 
     currIndex = (currIndex + 1) % (1 << pinCount);
 

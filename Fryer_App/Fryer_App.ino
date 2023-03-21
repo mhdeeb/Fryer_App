@@ -7,18 +7,19 @@
 #include "Multiplexer.h"
 #include <EEPROM.h>
 
-u8 MULTIPLEXER_PINS[] = {8, 9, 10};
+u8 MULTIPLEXER_PINS[] = {7, 6, 5};
+u8 BUTTONS_PINS[] = {0, 1, 2, A5, A4, 3};
+u8 SEV_SEG_PINS[][2] = {{A1, A2}, {12, A0}};
+
+#define ENCODER_PIN_A 9
+#define ENCODER_PIN_B 10
+#define ENCODER_PIN_BTN 11
+#define ALARM_PIN 8
+#define BUZZER_PIN A3
+
 bool MULTIPLEXER_OUTPUT[]{LOW, LOW, LOW, LOW, LOW, LOW, LOW};
-u8 BUTTONS_PINS[] = {13, 12, 0, 0, 0, 11};
-u8 SEV_SEG_PINS[][2] = {{6, 5}, {0, 0}};
 
 u32 Times[]{300, 300, 300, 300, 300};
-
-#define ENCODER_PIN_A 4
-#define ENCODER_PIN_B 3
-#define ENCODER_PIN_BTN 2
-#define ALARM_PIN 7
-#define BUZZER_PIN 7
 
 Encoder encoder(ENCODER_PIN_A, ENCODER_PIN_B, ENCODER_PIN_BTN);
 
@@ -126,7 +127,6 @@ Multiplexer multiplexer{MULTIPLEXER_PINS, sizeof(MULTIPLEXER_PINS) / sizeof(u8)}
 SevSeg sevSeg1(SEV_SEG_PINS[0][0], SEV_SEG_PINS[0][1]);
 SevSeg sevSeg2(SEV_SEG_PINS[1][0], SEV_SEG_PINS[1][1]);
 
-u8 showntimers[] = {0, 1};
 u8 shownTimerIndex = 0;
 
 enum class InterfaceMode
@@ -174,8 +174,8 @@ void setup()
 		i++;
 	}
 
-	sevSeg1.Set(Timers[showntimers[0]].GetTimer());
-	sevSeg2.Set(Timers[showntimers[1]].GetTimer());
+	sevSeg1.Set(Timers[0].GetTimer());
+	sevSeg2.Set(Timers[1].GetTimer());
 
 	multiplexer.Set(MULTIPLEXER_OUTPUT);
 }
@@ -280,6 +280,8 @@ void loop()
 			sevSeg2.GetDisplay()->setBrightness(0x05, false);
 			multiplexer.Set(5, true);
 			encoder.SetCounter(&timeCounter[editMinutes = false]);
+			for (auto &timer : Timers)
+				timer.GetTimer()->Reset();
 		}
 		else
 		{
