@@ -17,6 +17,7 @@ private:
     Timer *timer = nullptr;
     u32 lastUpdateTime = 0;
     bool blink = false;
+    bool blinkOn = false;
 
 public:
     SevSeg(u8 clk, u8 dio);

@@ -35,6 +35,7 @@ public:
     void Update();
     bool IsOn() const;
     void Play(Melody *melody, u32 playCount = 1);
+    void Continue(Melody *melody, u32 playCount);
     void Stop();
     u8 GetPin() const;
     Melody *GetMelody();

@@ -6,7 +6,10 @@
 
 #include <Arduino.h>
 
-SevSeg::SevSeg(u8 clk, u8 dio) : display(clk, dio) {}
+SevSeg::SevSeg(u8 clk, u8 dio) : display(clk, dio)
+{
+    display.setBrightness(0x05);
+}
 
 void SevSeg::Set(Timer *timer)
 {
@@ -15,15 +18,21 @@ void SevSeg::Set(Timer *timer)
 
 void SevSeg::Update()
 {
+    if ((millis() - lastUpdateTime) < 500 || !timer)
+        return;
 
-    if ((millis() - lastUpdateTime) < 500)
-        return;
-    if (timer == nullptr)
-        return;
-    if (timer->IsRunning())
-        display.showNumberDecEx(timer->GetMinutes() * 100 + timer->GetSeconds(), (blink != blink) ? 0b01000000 : 0, true, 4, 0);
+    if (timer->IsRunning() || timer->IsFinished())
+        blink = !blink;
     else
-        display.showNumberDecEx(timer->GetMinutes() * 100 + timer->GetSeconds(), 0b01000000, true, 4, 0);
+        blink = false;
+
+    if (timer->IsFinished() && blink)
+        display.setBrightness(0x05, false);
+    else
+        display.setBrightness(0x05, true);
+
+    display.showNumberDecEx(timer->GetMinutes() * 100 + timer->GetSeconds(), blink ? 0 : 0b01000000, true, 4, 0);
+
     lastUpdateTime = millis();
 }
 

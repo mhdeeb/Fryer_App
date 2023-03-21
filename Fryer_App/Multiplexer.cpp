@@ -10,27 +10,17 @@ Multiplexer::Multiplexer(const u8 *pins, u8 pinCount)
 {
     this->pinCount = pinCount;
     this->pins = new u8[pinCount]{};
-    this->values = new bool[1 << pinCount]{};
     for (u8 i = 0; i < pinCount; i++)
+    {
+        pinMode(pins[i], OUTPUT);
         this->pins[i] = pins[i];
+    }
     lastUpdateTime = millis();
 }
 
-Multiplexer::~Multiplexer()
+void Multiplexer::Set(bool *values)
 {
-    if (pins != nullptr)
-        delete[] pins;
-    if (values != nullptr)
-        delete[] values;
-}
-
-void Multiplexer::Set(const bool *values)
-{
-    if (this->values != nullptr)
-        delete[] this->values;
-    this->values = new bool[1 << pinCount]{};
-    for (u8 i = 0; i < (1 << pinCount); i++)
-        this->values[i] = values[i];
+    this->values = values;
 }
 
 void Multiplexer::Set(u32 index, bool value)
@@ -43,9 +33,16 @@ void Multiplexer::Update()
 {
     if ((millis() - lastUpdateTime) < 1)
         return;
-    if (values[currIndex])
+
+    if (currIndex == 7)
         for (u8 j = 0; j < pinCount; j++)
-            digitalWrite(pins[j], (currIndex >> j) & 1);
+            digitalWrite(pins[j], LOW);
+    else if (values[currIndex])
+        for (u8 j = 0; j < pinCount; j++)
+            digitalWrite(pins[j], ((currIndex + 1) >> j) & 1);
+
     currIndex = (currIndex + 1) % (1 << pinCount);
-    lastUpdateTime = millis();
+
+    if (values[currIndex])
+        lastUpdateTime = millis();
 }

@@ -17,8 +17,7 @@ private:
 
 public:
     Multiplexer(const u8 *pins, u8 pinCount);
-    ~Multiplexer();
-    void Set(const bool *values);
+    void Set(bool *values);
     void Set(u32 index, bool value);
     void Update();
 };

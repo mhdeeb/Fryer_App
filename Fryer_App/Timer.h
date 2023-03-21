@@ -39,40 +39,6 @@ public:
 
     bool IsFinished() const;
 
-    // u32 GetMilliseconds() const;
-
-    // u32 GetHours() const;
-
-    // u32 GetMinutes() const;
-
-    // u32 GetSeconds() const;
-
-    // void SetTime(u32 hours, u32 minutes, u32 seconds, u32 milliseconds);
-
-    // void SetMinutes(u32 minutes);
-
-    // void SetSeconds(u32 seconds);
-
-    // void SetHours(u32 hours);
-
-    // void SetMilliseconds(u32 milliseconds);
-
-    // void IncrementMinutes(u32 minutes);
-
-    // void IncrementSeconds(u32 seconds);
-
-    // void IncrementHours(u32 hours);
-
-    // void IncrementMilliseconds(u32 milliseconds);
-
-    // void DecrementMinutes(u32 minutes);
-
-    // void DecrementSeconds(u32 seconds);
-
-    // void DecrementHours(u32 hours);
-
-    // void DecrementMilliseconds(u32 milliseconds);
-
     void IncrementMinutes(u32 minutes);
 
     void IncrementSeconds(u32 seconds);
@@ -80,8 +46,6 @@ public:
     void DecrementMinutes(u32 minutes);
 
     void DecrementSeconds(u32 seconds);
-
-    u32 GetValue() const;
 
     u32 GetMinutes() const;
 

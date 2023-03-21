@@ -56,41 +56,29 @@ bool Timer::IsRunning() const { return isRunning; }
 
 bool Timer::IsFinished() const { return isFinished; }
 
-// u32 Timer::GetMilliseconds() const { return counter.GetValue(); }
+void Timer::IncrementMinutes(u32 minutes)
+{
+    counter.SetValue(counter.GetValue() + minutes * 60);
+}
 
-// u32 Timer::GetHours() const { return counter.GetValue() / 3600; }
+void Timer::IncrementSeconds(u32 seconds)
+{
+    counter.SetValue(counter.GetValue() + seconds);
+}
 
-// u32 Timer::GetMinutes() const { return (counter.GetValue() % 3600) / 60; }
+void Timer::DecrementMinutes(u32 minutes)
+{
+    counter.SetValue(counter.GetValue() - minutes * 60);
+}
 
-// u32 Timer::GetSeconds() const { return counter.GetValue() % 60; }
+void Timer::DecrementSeconds(u32 seconds)
+{
+    counter.SetValue(counter.GetValue() - seconds);
+}
 
-// void Timer::SetTime(u32 hours, u32 minutes, u32 seconds, u32 milliseconds) { counter.SetValue(hours * 360000 + minutes * 60000 + seconds * 1000 + milliseconds); }
+u32 Timer::GetMinutes() const { return counter.GetValue() / 60; }
 
-// void Timer::SetMinutes(u32 minutes) { SetTime(GetHours(), minutes, GetSeconds(), GetMilliseconds()); }
-
-// void Timer::SetSeconds(u32 seconds) { SetTime(GetHours(), GetMinutes(), seconds, GetMilliseconds()); }
-
-// void Timer::SetHours(u32 hours) { SetTime(hours, GetMinutes(), GetSeconds(), GetMilliseconds()); }
-
-// void Timer::SetMilliseconds(u32 milliseconds) { SetTime(GetHours(), GetMinutes(), GetSeconds(), milliseconds); }
-
-// void Timer::IncrementMinutes(u32 minutes) { counter.Increment(minutes * 60); }
-
-// void Timer::IncrementSeconds(u32 seconds) { counter.Increment(seconds); }
-
-void Timer::IncrementMinutes(u32 minutes) { counter.SetValue(counter.GetValue() + minutes * 60000); }
-
-void Timer::IncrementSeconds(u32 seconds) { counter.SetValue(counter.GetValue() + seconds * 1000); }
-
-void Timer::DecrementMinutes(u32 minutes) { counter.SetValue(counter.GetValue() - minutes * 60000); }
-
-void Timer::DecrementSeconds(u32 seconds) { counter.SetValue(counter.GetValue() - seconds * 1000); }
-
-u32 Timer::GetValue() const { return counter.GetValue(); }
-
-u32 Timer::GetMinutes() const { return counter.GetValue() / 60000; }
-
-u32 Timer::GetSeconds() const { return (counter.GetValue() % 60000) / 1000; }
+u32 Timer::GetSeconds() const { return counter.GetValue() % 60; }
 
 u32 Timer::GetTime() const { return counter.GetValue(); }
 

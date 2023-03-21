@@ -50,6 +50,12 @@ void Buzzer::Play(Melody *melody, u32 playCount)
     isOn = true;
 }
 
+void Buzzer::Continue(Melody *melody, u32 playCount)
+{
+    if (!isOn)
+        Play(melody, playCount);
+}
+
 void Buzzer::Stop()
 {
     isOn = false;
