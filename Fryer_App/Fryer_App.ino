@@ -9,7 +9,7 @@
 
 u8 MULTIPLEXER_PINS[] = {7, 6, 5};
 u8 BUTTONS_PINS[] = {0, 1, 2, A5, A4, 3};
-u8 SEV_SEG_PINS[][2] = {{A1, A2}, {12, A0}};
+u8 SEV_SEG_PINS[][2] = {{12, A0}, {A1, A2}};
 
 #define ENCODER_PIN_A 9
 #define ENCODER_PIN_B 10

@@ -34,15 +34,16 @@ void Multiplexer::Update()
     if ((millis() - lastUpdateTime) < 1)
         return;
 
-    if (currIndex == 7)
+    if (currIndex == (1 << pinCount) - 1)
         for (u8 j = 0; j < pinCount; j++)
             digitalWrite(pins[j], LOW);
     else if (values[currIndex])
+    {
         for (u8 j = 0; j < pinCount; j++)
-            digitalWrite(pins[j], ((currIndex + 1) >> j) & 1);
+            digitalWrite(pins[j], ((currIndex + 1) >> (pinCount - j - 1)) & 1);
+
+        lastUpdateTime = millis();
+    }
 
     currIndex = (currIndex + 1) % (1 << pinCount);
-
-    if (values[currIndex])
-        lastUpdateTime = millis();
 }
