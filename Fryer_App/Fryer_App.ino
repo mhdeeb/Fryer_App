@@ -2,8 +2,8 @@
 // Path: Fryer_App/Heater.cpp
 // Link: https://github.com/mhdeeb/Fryer_App
 
-#include "SevSeg.h"
-#include "Buzzer.h"
+#include "lib/SevSeg.h"
+#include "lib/Buzzer.h"
 
 #include <EEPROM.h>
 #include <Keypad.h>
