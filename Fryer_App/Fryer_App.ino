@@ -31,7 +31,7 @@ u8 SEV_SEG_PINS[][2] = {{12, A0}, {A1, A2}};
 #define ALARM_PIN 8
 #define BUZZER_PIN A3
 
-#define TIMER_NUMBER 10
+#define TIMER_COUNT 10
 
 Note long_note[]{
 	{255, 400},
@@ -64,7 +64,7 @@ Melody error_beep{
 Buzzer sound(BUZZER_PIN);
 Buzzer alarm(ALARM_PIN);
 
-Timer Timers[TIMER_NUMBER];
+Timer Timers[TIMER_COUNT];
 
 SevSeg sevSeg1(SEV_SEG_PINS[0][0], SEV_SEG_PINS[0][1]);
 SevSeg sevSeg2(SEV_SEG_PINS[1][0], SEV_SEG_PINS[1][1]);
@@ -123,7 +123,7 @@ void setup()
 {
 	Serial.begin(9600);
 
-	for (u8 i = 0; i < TIMER_NUMBER; i++)
+	for (u8 i = 0; i < TIMER_COUNT; i++)
 		Timers[i].Set(loadTime(i));
 
 	sevSeg1.Set(&Timers[0]);
