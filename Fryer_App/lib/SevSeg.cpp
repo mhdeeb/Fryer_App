@@ -31,7 +31,9 @@ void SevSeg::Update()
     else
         display.setBrightness(0x05, true);
 
-    display.showNumberDecEx(timer->GetMinutes() * 100 + timer->GetSeconds(), blink ? 0 : 0b01000000, true, 4, 0);
+    u32 time = timer->GetTime();
+
+    display.showNumberDecEx(time / 60 * 100 + time % 60, blink ? 0 : 0b01000000, true, 4, 0);
 
     lastUpdateTime = millis();
 }

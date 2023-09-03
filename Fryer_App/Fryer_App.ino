@@ -4,6 +4,7 @@
 
 #include "lib/SevSeg.h"
 #include "lib/Buzzer.h"
+#include "lib/SerialToParallel.h"
 
 #include <EEPROM.h>
 #include <Keypad.h>
@@ -15,23 +16,30 @@ const String EDIT_COMMAND = "19119";
 const byte rows = 4;
 const byte cols = 4;
 
+byte rowPins[rows] = {2, 3, 4, 5};
+byte colPins[cols] = {6, 7, 8, 9};
+
 char keys[rows][cols] = {
 	{'0', '1', '2', '3'},
 	{'4', '5', '6', '7'},
 	{'8', '9', 'L', 'R'},
 	{'E', '_', '_', '_'}};
 
-byte rowPins[rows] = {2, 3, 4, 5};
-byte colPins[cols] = {6, 7, 8, 9};
+#define ALARM_PIN 8
+#define BUZZER_PIN A3
+#define SERIAL_TO_PARALLEL_LATCH_PIN 2
+#define SERIAL_TO_PARALLEL_CLOCK_PIN 3
+#define SERIAL_TO_PARALLEL_DATA_PIN 4
+#define SEV_SEG_1_CLK_PIN 12
+#define SEV_SEG_1_DIO_PIN A0
+#define SEV_SEG_2_CLK_PIN A1
+#define SEV_SEG_2_DIO_PIN A2
+
+#define TIMER_COUNT 10
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, rows, cols);
 
-u8 SEV_SEG_PINS[][2] = {{12, A0}, {A1, A2}};
-
-#define ALARM_PIN 8
-#define BUZZER_PIN A3
-
-#define TIMER_COUNT 10
+SerialToParallel serialToParallel(SERIAL_TO_PARALLEL_LATCH_PIN, SERIAL_TO_PARALLEL_CLOCK_PIN, SERIAL_TO_PARALLEL_DATA_PIN);
 
 Note long_note[]{
 	{255, 400},
@@ -66,8 +74,8 @@ Buzzer alarm(ALARM_PIN);
 
 Timer Timers[TIMER_COUNT];
 
-SevSeg sevSeg1(SEV_SEG_PINS[0][0], SEV_SEG_PINS[0][1]);
-SevSeg sevSeg2(SEV_SEG_PINS[1][0], SEV_SEG_PINS[1][1]);
+SevSeg sevSeg1(SEV_SEG_1_CLK_PIN, SEV_SEG_1_DIO_PIN);
+SevSeg sevSeg2(SEV_SEG_2_CLK_PIN, SEV_SEG_2_DIO_PIN);
 
 enum class InterfaceMode
 {
@@ -146,6 +154,7 @@ void loop()
 		{
 			mode = InterfaceMode::COMMAND_MODE;
 			command_time = millis();
+			serialToParallel.TurnOn(10);
 		}
 		else if (key == 'L')
 			;
@@ -160,6 +169,7 @@ void loop()
 		if (key == 'E')
 		{
 			mode = InterfaceMode::RUN_MODE;
+			serialToParallel.Set(0);
 		}
 		else if (isdigit(key))
 		{
@@ -193,6 +203,10 @@ void loop()
 				numberIndex = 0;
 
 				sevSeg1.Set(&Timers[index]);
+
+				serialToParallel.Set(0);
+				serialToParallel.TurnOn(10);
+				serialToParallel.TurnOn(index);
 			}
 		}
 	}
@@ -203,6 +217,7 @@ void loop()
 		if (key == 'E' || millis() - command_time >= COMMAND_TIME)
 		{
 			mode = InterfaceMode::RUN_MODE;
+			serialToParallel.Set(0);
 			sound.Play(&error_beep, 1);
 			command = "";
 		}
@@ -219,6 +234,7 @@ void loop()
 				else
 				{
 					mode = InterfaceMode::RUN_MODE;
+					serialToParallel.Set(0);
 					sound.Play(&error_beep, 1);
 				}
 
