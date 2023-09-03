@@ -1,6 +1,6 @@
 {
     "board": "arduino:avr:uno",
-    "port": "COM3",
+    "port": "COM5",
     "programmer": "avrispmkii",
     "sketch": "Fryer_App\\Fryer_App.ino",
     "output": "Output"

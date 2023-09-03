@@ -5,7 +5,23 @@
 #include "Encoder.h"
 #include "SevSeg.h"
 #include "Multiplexer.h"
+
 #include <EEPROM.h>
+#include <Keypad.h>
+
+const byte rows = 4;
+const byte cols = 4;
+
+char keys[rows][cols] = {
+	{'0', '1', '2', '3'},
+	{'4', '5', '6', '7'},
+	{'8', '9', 'L', 'R'},
+	{'E', '_', '_', '_'}};
+
+byte rowPins[rows] = {0, 1, 2, 3};
+byte colPins[cols] = {4, 5, 6, 7};
+
+Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, rows, cols);
 
 u8 MULTIPLEXER_PINS[] = {7, 6, 5};
 u8 BUTTONS_PINS[] = {0, 1, 2, A5, A4, 3};
@@ -189,6 +205,13 @@ Counter timeCounter[]{{0, 99}, {0, 59}};
 
 void loop()
 {
+	char key = keypad.getKey();
+
+	if (key != NO_KEY)
+	{
+		// Do something with the key
+	}
+
 	if (millis() - lastBlink > 500)
 	{
 		blinker = !blinker;
