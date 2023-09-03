@@ -20,8 +20,9 @@ void SerialToParallel::Set(u16 data)
     this->data = data;
 
     digitalWrite(latchPin, LOW);
-
-    shiftOut(dataPin, clockPin, MSBFIRST, data);
+    
+    shiftOut(dataPin, clockPin, MSBFIRST, highByte(data));
+    shiftOut(dataPin, clockPin, MSBFIRST, lowByte(data));
 
     digitalWrite(latchPin, HIGH);
 }
