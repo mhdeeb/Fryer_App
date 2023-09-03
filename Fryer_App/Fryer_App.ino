@@ -156,12 +156,9 @@ void loop()
 			command_time = millis();
 			serialToParallel.TurnOn(10);
 		}
-		else if (key == 'L')
-			;
-		else if (key == 'R')
-			;
-		else
+		else if (isDigit(key))
 		{
+			u8 index = key - '0';
 		}
 	}
 	else if (mode == InterfaceMode::EDIT_MODE)
@@ -171,7 +168,7 @@ void loop()
 			mode = InterfaceMode::RUN_MODE;
 			serialToParallel.Set(0);
 		}
-		else if (isdigit(key))
+		else if (isDigit(key))
 		{
 			static bool numberSelected = false;
 			static u8 index{};
@@ -230,6 +227,8 @@ void loop()
 				if (command.equals(EDIT_COMMAND))
 				{
 					mode = InterfaceMode::EDIT_MODE;
+					for (auto &timer : Timers)
+						timer.Reset();
 				}
 				else
 				{
