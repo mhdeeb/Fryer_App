@@ -2,12 +2,15 @@
 // Path: Fryer_App/Heater.cpp
 // Link: https://github.com/mhdeeb/Fryer_App
 
-#include "Encoder.h"
 #include "SevSeg.h"
-#include "Multiplexer.h"
+#include "Buzzer.h"
 
 #include <EEPROM.h>
 #include <Keypad.h>
+
+const u32 COMMAND_TIME = 5000;
+
+const String EDIT_COMMAND = "19119";
 
 const byte rows = 4;
 const byte cols = 4;
@@ -18,26 +21,17 @@ char keys[rows][cols] = {
 	{'8', '9', 'L', 'R'},
 	{'E', '_', '_', '_'}};
 
-byte rowPins[rows] = {0, 1, 2, 3};
-byte colPins[cols] = {4, 5, 6, 7};
+byte rowPins[rows] = {2, 3, 4, 5};
+byte colPins[cols] = {6, 7, 8, 9};
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, rows, cols);
 
-u8 MULTIPLEXER_PINS[] = {7, 6, 5};
-u8 BUTTONS_PINS[] = {0, 1, 2, A5, A4, 3};
 u8 SEV_SEG_PINS[][2] = {{12, A0}, {A1, A2}};
 
-#define ENCODER_PIN_A 9
-#define ENCODER_PIN_B 10
-#define ENCODER_PIN_BTN 11
 #define ALARM_PIN 8
 #define BUZZER_PIN A3
 
-bool MULTIPLEXER_OUTPUT[]{LOW, LOW, LOW, LOW, LOW, LOW, LOW};
-
-u32 Times[]{300, 300, 300, 300, 300};
-
-Encoder encoder(ENCODER_PIN_A, ENCODER_PIN_B, ENCODER_PIN_BTN);
+#define TIMER_NUMBER 10
 
 Note long_note[]{
 	{255, 400},
@@ -70,259 +64,166 @@ Melody error_beep{
 Buzzer sound(BUZZER_PIN);
 Buzzer alarm(ALARM_PIN);
 
-struct Timer_Module
-{
-private:
-	Timer timer;
-
-public:
-	PushButton switcher;
-	Buzzer *alarm = nullptr;
-	Buzzer *buzzer = nullptr;
-
-	Timer_Module(u32 initialValue, u8 switcherPin, u32 holdTime = 3000) : timer(initialValue), switcher(switcherPin, holdTime)
-	{
-	}
-
-	void Update()
-	{
-		switcher.Update();
-
-		timer.Update();
-
-		if (switcher.Get(PushButtonInterface::PRESSED))
-		{
-			if (timer.IsFinished())
-			{
-				timer.Reset();
-
-				if (alarm)
-					alarm->Stop();
-
-				switcher.Set(PushButtonInterface::RESETED);
-			}
-			else if (!timer.IsRunning())
-				timer.Start();
-
-			if (buzzer)
-				buzzer->Play(&select_beep, 1);
-		}
-		else if (switcher.Get(PushButtonInterface::HELD))
-		{
-			timer.Reset();
-			switcher.Set(PushButtonInterface::RESETED);
-			if (buzzer)
-				buzzer->Play(&select_beep, 1);
-		}
-
-		if (timer.IsFinished() && alarm)
-		{
-			alarm->Continue(&alarm_beep, -1);
-		}
-	}
-
-	bool IsRunning() { return timer.IsRunning(); }
-
-	Timer *GetTimer()
-	{
-		return &timer;
-	}
-};
-
-Timer_Module Timers[]{
-	Timer_Module(0, BUTTONS_PINS[0]),
-	Timer_Module(0, BUTTONS_PINS[1]),
-	Timer_Module(0, BUTTONS_PINS[2]),
-	Timer_Module(0, BUTTONS_PINS[3]),
-	Timer_Module(0, BUTTONS_PINS[4])};
-
-PushButton edit_switch(BUTTONS_PINS[5], 3000);
-
-Multiplexer multiplexer{MULTIPLEXER_PINS, sizeof(MULTIPLEXER_PINS) / sizeof(u8)};
+Timer Timers[TIMER_NUMBER];
 
 SevSeg sevSeg1(SEV_SEG_PINS[0][0], SEV_SEG_PINS[0][1]);
 SevSeg sevSeg2(SEV_SEG_PINS[1][0], SEV_SEG_PINS[1][1]);
 
-u8 shownTimerIndex = 0;
-
 enum class InterfaceMode
 {
 	RUN_MODE = 0,
-	EDIT_MODE = 1
+	EDIT_MODE = 1,
+	COMMAND_MODE = 2,
 };
+
 InterfaceMode mode = InterfaceMode::RUN_MODE;
 
-void saveTimer(u8 index)
+void timeToByte(u32 time, u8 *bytes)
 {
 	for (u8 i = 0; i < 4; i++)
-		EEPROM.write(index * 4 + i + 1, (Times[index] >> (24 - 8 * i)) & 0xFF);
+		bytes[i] = (time >> (24 - 8 * i)) & 0xFF;
 }
 
-void loadTimer(u8 index)
+u32 byteToTime(u8 *bytes)
 {
-	Times[index] = 0;
+	return (u32)bytes[0] * 600 + (u32)bytes[1] * 60 + (u32)bytes[2] * 10 + (u32)bytes[3];
+}
+
+void saveTime(u8 index, u32 time)
+{
+	u8 bytes[4];
+
+	timeToByte(time, bytes);
+
+	saveTimeBytes(index, bytes);
+}
+
+void saveTimeBytes(u8 index, u8 *time)
+{
 	for (u8 i = 0; i < 4; i++)
-		Times[index] = (Times[index] << 8) | EEPROM.read(index * 4 + i + 1);
+		EEPROM.write(index * 4 + i, time[i]);
+}
+
+void loadTimeBytes(u8 index, u8 *time)
+{
+	for (u8 i = 0; i < 4; i++)
+		time[i] = EEPROM.read(index * 4 + i);
+}
+
+u32 loadTime(u8 index)
+{
+	u8 bytes[4];
+
+	loadTimeBytes(index, bytes);
+
+	return byteToTime(bytes);
 }
 
 void setup()
 {
 	Serial.begin(9600);
 
-	if (EEPROM.read(0) == 0x55)
-	{
-		for (u8 i = 0; i < sizeof(Times) / sizeof(*Times); i++)
-			loadTimer(i);
-	}
-	else
-	{
-		EEPROM.write(0, 0x55);
-		for (u8 i = 0; i < sizeof(Times) / sizeof(*Times); i++)
-			saveTimer(i);
-	}
+	for (u8 i = 0; i < TIMER_NUMBER; i++)
+		Timers[i].Set(loadTime(i));
 
-	int i = 0;
-	for (auto &timer : Timers)
-	{
-		timer.GetTimer()->Set(Times[i]);
-		timer.alarm = &alarm;
-		timer.buzzer = &sound;
-		i++;
-	}
-
-	sevSeg1.Set(Timers[0].GetTimer());
-	sevSeg2.Set(Timers[1].GetTimer());
-
-	multiplexer.Set(MULTIPLEXER_OUTPUT);
+	sevSeg1.Set(&Timers[0]);
+	sevSeg2.Set(&Timers[1]);
 }
-
-bool blinker = false;
-u32 lastBlink = millis();
-u8 selectTimeIndex = 0;
-bool editMinutes = true;
-Timer editTimer(0);
-Counter timeCounter[]{{0, 99}, {0, 59}};
 
 void loop()
 {
+	u32 command_time;
 	char key = keypad.getKey();
 
 	if (key != NO_KEY)
 	{
-		// Do something with the key
-	}
-
-	if (millis() - lastBlink > 500)
-	{
-		blinker = !blinker;
-		lastBlink = millis();
+		sound.Play(&select_beep, 1);
 	}
 
 	if (mode == InterfaceMode::RUN_MODE)
 	{
-		for (int i = 0; i < sizeof(Timers) / sizeof(Timer_Module); i++)
+		if (key == 'E')
 		{
-			Timers[i].Update();
-
-			if (Timers[i].switcher.Get(PushButtonInterface::PRESSED))
-			{
-				if (shownTimerIndex)
-				{
-					sevSeg2.Set(Timers[i].GetTimer());
-				}
-				else
-				{
-					sevSeg1.Set(Timers[i].GetTimer());
-				}
-
-				shownTimerIndex = !shownTimerIndex;
-			}
-
-			if (Timers[i].IsRunning())
-				multiplexer.Set(i, true);
-			else if (Timers[i].GetTimer()->IsFinished())
-				multiplexer.Set(i, blinker);
-			else
-				multiplexer.Set(i, false);
+			mode = InterfaceMode::COMMAND_MODE;
+			command_time = millis();
+		}
+		else if (key == 'L')
+			;
+		else if (key == 'R')
+			;
+		else
+		{
 		}
 	}
 	else if (mode == InterfaceMode::EDIT_MODE)
 	{
-		encoder.Update();
-
-		for (int i = 0; i < sizeof(Timers) / sizeof(Timer_Module); i++)
-		{
-			PushButton &button = Timers[i].switcher;
-
-			button.Update();
-
-			if (button.Get(PushButtonInterface::PRESSED))
-			{
-				for (int i = 0; i < sizeof(Timers) / sizeof(Timer_Module); i++)
-					multiplexer.Set(i, false);
-
-				multiplexer.Set(i, true);
-
-				selectTimeIndex = i;
-
-				editTimer.Set(Times[selectTimeIndex]);
-
-				timeCounter[0].SetValue(Times[selectTimeIndex] / 60);
-				timeCounter[1].SetValue(Times[selectTimeIndex] % 60);
-
-				sound.Play(&select_beep, 1);
-			}
-		}
-
-		if (encoder.GetButton().Get(PushButtonInterface::PRESSED))
-		{
-			encoder.SetCounter(&timeCounter[editMinutes = !editMinutes]);
-
-			sound.Play(&select_beep, 1);
-		}
-
-		if (s8 change = encoder.popRotationChange())
-		{
-			Times[selectTimeIndex] = timeCounter[0].GetValue() * 60 + timeCounter[1].GetValue();
-
-			editTimer.Set(Times[selectTimeIndex]);
-
-			sound.Play(&select_beep, 1);
-		}
-	}
-
-	if (edit_switch.Get(PushButtonInterface::PRESSED))
-	{
-
-		sound.Play(&select_beep, 1);
-
-		if (edit_switch.Get(PushButtonInterface::TOGGLED))
-		{
-			mode = InterfaceMode::EDIT_MODE;
-			sevSeg1.Set(&editTimer);
-			sevSeg2.GetDisplay()->setBrightness(0x05, false);
-			multiplexer.Set(5, true);
-			encoder.SetCounter(&timeCounter[editMinutes = false]);
-			for (auto &timer : Timers)
-				timer.GetTimer()->Reset();
-		}
-		else
+		if (key == 'E')
 		{
 			mode = InterfaceMode::RUN_MODE;
-			sevSeg1.Set(Timers[0].GetTimer());
-			sevSeg2.Set(Timers[0].GetTimer());
-			sevSeg2.GetDisplay()->setBrightness(0x05, true);
-			multiplexer.Set(5, false);
+		}
+		else if (isdigit(key))
+		{
+			static bool numberSelected = false;
+			static u8 index{};
+			static u8 numberIndex{};
 
-			int i = 0;
-			for (auto &timer : Timers)
+			if (numberSelected)
 			{
-				timer.GetTimer()->Set(Times[i]);
-				i++;
-			}
+				u8 number = key - '0';
 
-			for (u8 i = 0; i < sizeof(Times) / sizeof(*Times); i++)
-				saveTimer(i);
+				u8 timeBytes[4];
+
+				loadTimeBytes(index, timeBytes);
+
+				timeBytes[numberIndex++] = number;
+
+				Timers[index].Set(byteToTime(timeBytes));
+
+				saveTimeBytes(index, timeBytes);
+
+				if (numberIndex == 4)
+				{
+					numberSelected = false;
+				}
+			}
+			else
+			{
+				numberSelected = true;
+				index = key - '0';
+				numberIndex = 0;
+
+				sevSeg1.Set(&Timers[index]);
+			}
+		}
+	}
+	else if (mode == InterfaceMode::COMMAND_MODE)
+	{
+		static String command;
+
+		if (key == 'E' || millis() - command_time >= COMMAND_TIME)
+		{
+			mode = InterfaceMode::RUN_MODE;
+			sound.Play(&error_beep, 1);
+			command = "";
+		}
+		else if (isdigit(key))
+		{
+			command += key;
+
+			if (command.length() == 5)
+			{
+				if (command.equals(EDIT_COMMAND))
+				{
+					mode = InterfaceMode::EDIT_MODE;
+				}
+				else
+				{
+					mode = InterfaceMode::RUN_MODE;
+					sound.Play(&error_beep, 1);
+				}
+
+				command = "";
+			}
 		}
 	}
 
@@ -330,10 +231,9 @@ void loop()
 
 	sound.Update();
 
-	multiplexer.Update();
+	for (auto &timer : Timers)
+		timer.Update();
 
 	sevSeg1.Update();
 	sevSeg2.Update();
-
-	edit_switch.Update();
 }

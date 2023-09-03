@@ -6,42 +6,43 @@
 
 #include <Arduino.h>
 
-Timer::Timer(u32 initialValue) : counter(0, initialValue, initialValue, 1, false), lastUpdateTime(millis())
-{
-    counter.SetValue(initialValue);
-}
+Timer::Timer() : counter(0, 0, 0, 1, false) {}
+
+Timer::Timer(u32 initialValue) : counter(0, initialValue, initialValue, 1, false) {}
 
 void Timer::Set(u32 value)
 {
     counter.SetMax(value);
     counter.SetValue(value);
+
+    Stop();
 }
 
 void Timer::Start()
 {
     isRunning = true;
-    isFinished = false;
+    lastUpdateTime = millis();
 }
 
 void Timer::Stop()
 {
     isRunning = false;
+    isFinished = false;
 }
 
 void Timer::Reset()
 {
-    counter.SetValue(counter.GetMax());
-    isRunning = false;
-    isFinished = false;
+    Set(counter.GetMax());
 }
 
 void Timer::SetUpdateDelay(u32 updateDelay) { this->updateDelay = updateDelay; }
 
 void Timer::Update()
 {
-    if (isRunning && (millis() - lastUpdateTime) >= updateDelay || isFinished)
+    if (isRunning && (millis() - lastUpdateTime) >= updateDelay)
     {
         counter.Decrement();
+
         if (counter.GetValue() == counter.GetMin())
         {
             isRunning = false;
@@ -56,30 +57,4 @@ bool Timer::IsRunning() const { return isRunning; }
 
 bool Timer::IsFinished() const { return isFinished; }
 
-void Timer::IncrementMinutes(u32 minutes)
-{
-    counter.SetValue(counter.GetValue() + minutes * 60);
-}
-
-void Timer::IncrementSeconds(u32 seconds)
-{
-    counter.SetValue(counter.GetValue() + seconds);
-}
-
-void Timer::DecrementMinutes(u32 minutes)
-{
-    counter.SetValue(counter.GetValue() - minutes * 60);
-}
-
-void Timer::DecrementSeconds(u32 seconds)
-{
-    counter.SetValue(counter.GetValue() - seconds);
-}
-
-u32 Timer::GetMinutes() const { return counter.GetValue() / 60; }
-
-u32 Timer::GetSeconds() const { return counter.GetValue() % 60; }
-
 u32 Timer::GetTime() const { return counter.GetValue(); }
-
-u32 Timer::GetMax() const { return counter.GetMax(); }

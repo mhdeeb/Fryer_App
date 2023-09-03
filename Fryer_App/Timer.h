@@ -9,18 +9,18 @@
 
 #include "Counter.h"
 
-#include "Buzzer.h"
-
 class Timer
 {
 private:
     Counter counter;
-    u32 lastUpdateTime;
+    u32 lastUpdateTime = 0;
     u32 updateDelay = 1000;
     bool isRunning = false;
     bool isFinished = false;
 
 public:
+    Timer();
+
     Timer(u32 initialValue);
 
     void Set(u32 value);
@@ -39,21 +39,7 @@ public:
 
     bool IsFinished() const;
 
-    void IncrementMinutes(u32 minutes);
-
-    void IncrementSeconds(u32 seconds);
-
-    void DecrementMinutes(u32 minutes);
-
-    void DecrementSeconds(u32 seconds);
-
-    u32 GetMinutes() const;
-
-    u32 GetSeconds() const;
-
     u32 GetTime() const;
-
-    u32 GetMax() const;
 };
 
 #endif // TIMER_H
