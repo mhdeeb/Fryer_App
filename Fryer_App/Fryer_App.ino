@@ -25,6 +25,8 @@ char keys[rows][cols] = {
 	{'7', '8', '9', 'R'},
 	{'E', '_', '_', '_'}};
 
+Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, rows, cols);
+
 #define ALARM_PIN 8
 #define BUZZER_PIN 7
 #define SERIAL_TO_PARALLEL_LATCH_PIN A4
@@ -36,8 +38,6 @@ char keys[rows][cols] = {
 #define SEV_SEG_2_DIO_PIN 6
 
 #define TIMER_COUNT 10
-
-Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, rows, cols);
 
 SerialToParallel serialToParallel(SERIAL_TO_PARALLEL_LATCH_PIN, SERIAL_TO_PARALLEL_CLOCK_PIN, SERIAL_TO_PARALLEL_DATA_PIN);
 
@@ -136,47 +136,110 @@ void setup()
 
 	sevSeg1.Set(&Timers[0]);
 	sevSeg2.Set(&Timers[1]);
+
+	keypad.setHoldTime(1000);
 }
 
-#define IsKeyPressed() (isKeyEvent && keypad.key[0].stateChanged && keypad.key[0].kstate == PRESSED)
+#define ISKEYPRESSED (isKeyEvent && keypad.key[0].stateChanged && keypad.key[0].kstate == PRESSED)
+
+#define ISKEYHELD (isKeyEvent && keypad.key[0].stateChanged && keypad.key[0].kstate == HOLD)
 
 void loop()
 {
 	static u32 command_time;
 	bool isKeyEvent = keypad.getKeys();
 
-	if (IsKeyPressed())
+	if (ISKEYPRESSED)
 	{
 		sound.Play(&select_beep, 1);
-		Serial.println(keypad.key[0].kchar); // DEBUG
 	}
 
 	if (mode == InterfaceMode::RUN_MODE)
 	{
-		if (IsKeyPressed() && keypad.key[0].kchar == 'E')
+		if (ISKEYPRESSED && keypad.key[0].kchar == 'E')
 		{
 			mode = InterfaceMode::COMMAND_MODE;
 			command_time = millis();
 			serialToParallel.TurnOn(10);
 			Serial.println("Enter Command"); // DEBUG
 		}
-		else if (IsKeyPressed() && isDigit(keypad.key[0].kchar))
+		else if (ISKEYPRESSED && isDigit(keypad.key[0].kchar))
 		{
 			u8 index = keypad.key[0].kchar - '0';
 
-			sevSeg1.Set(&Timers[index]);
-			sevSeg2.Set(sevSeg1.Get());
+			if (Timers[index].IsFinished())
+			{
+				Timers[index].Reset();
+				serialToParallel.stopBlinking(index);
+			}
+			else
+			{
+				sevSeg2.Set(sevSeg1.Get());
+				sevSeg1.Set(&Timers[index]);
+
+				Serial.print("Sev 1 is ");				  // DEBUG
+				Serial.println(sevSeg1.Get()->GetTime()); // DEBUG
+
+				Serial.print("Sev 2 is ");				  // DEBUG
+				Serial.println(sevSeg2.Get()->GetTime()); // DEBUG
+			}
+		}
+
+		else if (ISKEYHELD && isDigit(keypad.key[0].kchar))
+		{
+			u8 index = keypad.key[0].kchar - '0';
+
+			Serial.print(index); // DEBUG
+
+			if (Timers[index].IsRunning())
+			{
+				Timers[index].Reset();
+				serialToParallel.TurnOff(index);
+
+				Serial.println(" STOPPED"); // DEBUG
+			}
+			else
+			{
+				Timers[index].Start();
+				serialToParallel.TurnOn(index);
+
+				Serial.println(" STARTED"); // DEBUG
+			}
+		}
+
+		bool isAnyFinsihsed = false;
+		for (int index = 0; index < TIMER_COUNT; index++)
+		{
+			Timers[index].Update();
+
+			if (Timers[index].IsFinished())
+			{
+				isAnyFinsihsed = true;
+				if (!alarm.IsOn())
+				{
+					alarm.Play(&alarm_beep, -1);
+				}
+
+				if (!serialToParallel.isBlinking(index))
+				{
+					serialToParallel.startBlinking(index);
+				}
+			}
+		}
+		if (!isAnyFinsihsed)
+		{
+			alarm.Stop();
 		}
 	}
 	else if (mode == InterfaceMode::EDIT_MODE)
 	{
-		if (IsKeyPressed() && keypad.key[0].kchar == 'E')
+		if (ISKEYPRESSED && keypad.key[0].kchar == 'E')
 		{
 			mode = InterfaceMode::RUN_MODE;
 			serialToParallel.Set(0);
 			Serial.println("Exit Edit"); // DEBUG
 		}
-		else if (IsKeyPressed() && isDigit(keypad.key[0].kchar))
+		else if (ISKEYPRESSED && isDigit(keypad.key[0].kchar))
 		{
 			static bool numberSelected = false;
 			static u8 index{};
@@ -227,7 +290,7 @@ void loop()
 	{
 		static String command;
 
-		if ((IsKeyPressed() && keypad.key[0].kchar == 'E') || millis() - command_time >= COMMAND_TIME)
+		if ((ISKEYPRESSED && keypad.key[0].kchar == 'E') || millis() - command_time >= COMMAND_TIME)
 		{
 			mode = InterfaceMode::RUN_MODE;
 			serialToParallel.Set(0);
@@ -235,7 +298,7 @@ void loop()
 			command = "";
 			Serial.println("Exit Command"); // DEBUG
 		}
-		else if (IsKeyPressed() && isdigit(keypad.key[0].kchar))
+		else if (ISKEYPRESSED && isdigit(keypad.key[0].kchar))
 		{
 			command += keypad.key[0].kchar;
 
@@ -265,9 +328,8 @@ void loop()
 
 	sound.Update();
 
-	for (auto &timer : Timers)
-		timer.Update();
-
 	sevSeg1.Update();
 	sevSeg2.Update();
+
+	serialToParallel.Update();
 }
