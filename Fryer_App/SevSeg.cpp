@@ -16,6 +16,11 @@ void SevSeg::Set(Timer *timer)
     this->timer = timer;
 }
 
+Timer *SevSeg::Get()
+{
+    return timer;
+}
+
 void SevSeg::Update()
 {
     if ((millis() - lastUpdateTime) < 500 || !timer)

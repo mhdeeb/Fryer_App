@@ -22,6 +22,7 @@ private:
 public:
     SevSeg(u8 clk, u8 dio);
     void Set(Timer *timer);
+    Timer *Get();
     void Update();
     TM1637Display *GetDisplay();
 };

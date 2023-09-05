@@ -9,31 +9,31 @@
 #include <EEPROM.h>
 #include <Keypad.h>
 
-const u32 COMMAND_TIME = 5000;
+const u32 COMMAND_TIME = 6000;
 
 const String EDIT_COMMAND = "19119";
 
 const byte rows = 4;
 const byte cols = 4;
 
-byte rowPins[rows] = {2, 3, 4, 5};
-byte colPins[cols] = {6, 7, 8, 9};
+byte rowPins[rows] = {A2, A1, A0, 13};
+byte colPins[cols] = {12, 11, 10, 9};
 
 char keys[rows][cols] = {
-	{'0', '1', '2', '3'},
-	{'4', '5', '6', '7'},
-	{'8', '9', 'L', 'R'},
+	{'L', '0', '1', '2'},
+	{'3', '4', '5', '6'},
+	{'7', '8', '9', 'R'},
 	{'E', '_', '_', '_'}};
 
 #define ALARM_PIN 8
-#define BUZZER_PIN A3
-#define SERIAL_TO_PARALLEL_LATCH_PIN 2
-#define SERIAL_TO_PARALLEL_CLOCK_PIN 3
-#define SERIAL_TO_PARALLEL_DATA_PIN 4
-#define SEV_SEG_1_CLK_PIN 12
-#define SEV_SEG_1_DIO_PIN A0
-#define SEV_SEG_2_CLK_PIN A1
-#define SEV_SEG_2_DIO_PIN A2
+#define BUZZER_PIN 7
+#define SERIAL_TO_PARALLEL_LATCH_PIN A4
+#define SERIAL_TO_PARALLEL_CLOCK_PIN A5
+#define SERIAL_TO_PARALLEL_DATA_PIN A3
+#define SEV_SEG_1_CLK_PIN 3
+#define SEV_SEG_1_DIO_PIN 4
+#define SEV_SEG_2_CLK_PIN 5
+#define SEV_SEG_2_DIO_PIN 6
 
 #define TIMER_COUNT 10
 
@@ -138,40 +138,45 @@ void setup()
 	sevSeg2.Set(&Timers[1]);
 }
 
-u32 command_time;
+#define IsKeyPressed() (isKeyEvent && keypad.key[0].stateChanged && keypad.key[0].kstate == PRESSED)
 
 void loop()
 {
-	char key = keypad.getKey();
+	static u32 command_time;
+	bool isKeyEvent = keypad.getKeys();
 
-	if (key != NO_KEY)
+	if (IsKeyPressed())
 	{
 		sound.Play(&select_beep, 1);
-		Serial.println(key); // DEBUG
+		Serial.println(keypad.key[0].kchar); // DEBUG
 	}
 
 	if (mode == InterfaceMode::RUN_MODE)
 	{
-		if (key == 'E')
+		if (IsKeyPressed() && keypad.key[0].kchar == 'E')
 		{
 			mode = InterfaceMode::COMMAND_MODE;
 			command_time = millis();
 			serialToParallel.TurnOn(10);
 			Serial.println("Enter Command"); // DEBUG
 		}
-		else if (isDigit(key))
+		else if (IsKeyPressed() && isDigit(keypad.key[0].kchar))
 		{
-			u8 index = key - '0';
+			u8 index = keypad.key[0].kchar - '0';
+
+			sevSeg1.Set(&Timers[index]);
+			sevSeg2.Set(sevSeg1.Get());
 		}
 	}
 	else if (mode == InterfaceMode::EDIT_MODE)
 	{
-		if (key == 'E')
+		if (IsKeyPressed() && keypad.key[0].kchar == 'E')
 		{
 			mode = InterfaceMode::RUN_MODE;
 			serialToParallel.Set(0);
+			Serial.println("Exit Edit"); // DEBUG
 		}
-		else if (isDigit(key))
+		else if (IsKeyPressed() && isDigit(keypad.key[0].kchar))
 		{
 			static bool numberSelected = false;
 			static u8 index{};
@@ -179,7 +184,7 @@ void loop()
 
 			if (numberSelected)
 			{
-				u8 number = key - '0';
+				u8 number = keypad.key[0].kchar - '0';
 
 				u8 timeBytes[4];
 
@@ -194,12 +199,18 @@ void loop()
 				if (numberIndex == 4)
 				{
 					numberSelected = false;
+					Serial.println("Selection Over"); // DEBUG
 				}
+
+				Serial.print(number);				 // DEBUG
+				Serial.print(" ");					 // DEBUG
+				Serial.print(byteToTime(timeBytes)); // DEBUG
+				Serial.println(" Saved");			 // DEBUG
 			}
 			else
 			{
 				numberSelected = true;
-				index = key - '0';
+				index = keypad.key[0].kchar - '0';
 				numberIndex = 0;
 
 				sevSeg1.Set(&Timers[index]);
@@ -207,6 +218,8 @@ void loop()
 				serialToParallel.Set(0);
 				serialToParallel.TurnOn(10);
 				serialToParallel.TurnOn(index);
+				Serial.print(index);		 // DEBUG
+				Serial.println(" Selected"); // DEBUG
 			}
 		}
 	}
@@ -214,7 +227,7 @@ void loop()
 	{
 		static String command;
 
-		if (key == 'E' || millis() - command_time >= COMMAND_TIME)
+		if ((IsKeyPressed() && keypad.key[0].kchar == 'E') || millis() - command_time >= COMMAND_TIME)
 		{
 			mode = InterfaceMode::RUN_MODE;
 			serialToParallel.Set(0);
@@ -222,9 +235,9 @@ void loop()
 			command = "";
 			Serial.println("Exit Command"); // DEBUG
 		}
-		else if (isdigit(key))
+		else if (IsKeyPressed() && isdigit(keypad.key[0].kchar))
 		{
-			command += key;
+			command += keypad.key[0].kchar;
 
 			if (command.length() == 5)
 			{
@@ -240,6 +253,7 @@ void loop()
 					mode = InterfaceMode::RUN_MODE;
 					serialToParallel.Set(0);
 					sound.Play(&error_beep, 1);
+					Serial.println("Invalid Command"); // DEBUG
 				}
 
 				command = "";
