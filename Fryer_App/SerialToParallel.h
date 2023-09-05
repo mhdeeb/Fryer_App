@@ -5,6 +5,9 @@
 #ifndef SERIAL_TO_PARALLEL_H
 #define SERIAL_TO_PARALLEL_H
 
+#include "def.h"
+#include <Arduino.h>
+
 class SerialToParallel
 {
 public:
