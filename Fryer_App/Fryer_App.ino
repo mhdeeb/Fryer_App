@@ -138,14 +138,16 @@ void setup()
 	sevSeg2.Set(&Timers[1]);
 }
 
+u32 command_time;
+
 void loop()
 {
-	u32 command_time;
 	char key = keypad.getKey();
 
 	if (key != NO_KEY)
 	{
 		sound.Play(&select_beep, 1);
+		Serial.println(key); // DEBUG
 	}
 
 	if (mode == InterfaceMode::RUN_MODE)
@@ -155,6 +157,7 @@ void loop()
 			mode = InterfaceMode::COMMAND_MODE;
 			command_time = millis();
 			serialToParallel.TurnOn(10);
+			Serial.println("Enter Command"); // DEBUG
 		}
 		else if (isDigit(key))
 		{
@@ -217,6 +220,7 @@ void loop()
 			serialToParallel.Set(0);
 			sound.Play(&error_beep, 1);
 			command = "";
+			Serial.println("Exit Command"); // DEBUG
 		}
 		else if (isdigit(key))
 		{
@@ -229,6 +233,7 @@ void loop()
 					mode = InterfaceMode::EDIT_MODE;
 					for (auto &timer : Timers)
 						timer.Reset();
+					Serial.println("Enter Edit"); // DEBUG
 				}
 				else
 				{
