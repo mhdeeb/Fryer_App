@@ -161,7 +161,6 @@ void loop()
 			mode = InterfaceMode::COMMAND_MODE;
 			command_time = millis();
 			serialToParallel.TurnOn(10);
-			Serial.println("Enter Command"); // DEBUG
 		}
 		else if (ISKEYPRESSED && isDigit(keypad.key[0].kchar))
 		{
@@ -176,12 +175,6 @@ void loop()
 			{
 				sevSeg2.Set(sevSeg1.Get());
 				sevSeg1.Set(&Timers[index]);
-
-				Serial.print("Sev 1 is ");				  // DEBUG
-				Serial.println(sevSeg1.Get()->GetTime()); // DEBUG
-
-				Serial.print("Sev 2 is ");				  // DEBUG
-				Serial.println(sevSeg2.Get()->GetTime()); // DEBUG
 			}
 		}
 
@@ -189,21 +182,15 @@ void loop()
 		{
 			u8 index = keypad.key[0].kchar - '0';
 
-			Serial.print(index); // DEBUG
-
 			if (Timers[index].IsRunning())
 			{
 				Timers[index].Reset();
 				serialToParallel.TurnOff(index);
-
-				Serial.println(" STOPPED"); // DEBUG
 			}
 			else
 			{
 				Timers[index].Start();
 				serialToParallel.TurnOn(index);
-
-				Serial.println(" STARTED"); // DEBUG
 			}
 		}
 
@@ -237,7 +224,6 @@ void loop()
 		{
 			mode = InterfaceMode::RUN_MODE;
 			serialToParallel.Set(0);
-			Serial.println("Exit Edit"); // DEBUG
 		}
 		else if (ISKEYPRESSED && isDigit(keypad.key[0].kchar))
 		{
@@ -262,13 +248,7 @@ void loop()
 				if (numberIndex == 4)
 				{
 					numberSelected = false;
-					Serial.println("Selection Over"); // DEBUG
 				}
-
-				Serial.print(number);				 // DEBUG
-				Serial.print(" ");					 // DEBUG
-				Serial.print(byteToTime(timeBytes)); // DEBUG
-				Serial.println(" Saved");			 // DEBUG
 			}
 			else
 			{
@@ -281,8 +261,6 @@ void loop()
 				serialToParallel.Set(0);
 				serialToParallel.TurnOn(10);
 				serialToParallel.TurnOn(index);
-				Serial.print(index);		 // DEBUG
-				Serial.println(" Selected"); // DEBUG
 			}
 		}
 	}
@@ -296,7 +274,6 @@ void loop()
 			serialToParallel.Set(0);
 			sound.Play(&error_beep, 1);
 			command = "";
-			Serial.println("Exit Command"); // DEBUG
 		}
 		else if (ISKEYPRESSED && isdigit(keypad.key[0].kchar))
 		{
@@ -309,14 +286,12 @@ void loop()
 					mode = InterfaceMode::EDIT_MODE;
 					for (auto &timer : Timers)
 						timer.Reset();
-					Serial.println("Enter Edit"); // DEBUG
 				}
 				else
 				{
 					mode = InterfaceMode::RUN_MODE;
 					serialToParallel.Set(0);
 					sound.Play(&error_beep, 1);
-					Serial.println("Invalid Command"); // DEBUG
 				}
 
 				command = "";
